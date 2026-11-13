@@ -1211,6 +1211,12 @@
         border-color: #9eabc0;
       }
 
+      input[readonly] {
+        background: #f1f5f9;
+        color: var(--ink);
+        cursor: default;
+      }
+
       input:focus,
       select:focus {
         border-color: var(--blue);
@@ -1252,13 +1258,13 @@
       }
 
       .duration-pill {
-        height: 38px;
-        padding: 0 16px;
+        height: 48px;
+        padding: 0 22px;
         border: 1px solid #d4dce8;
         border-radius: 999px;
         color: #59657a;
         background: #fff;
-        font-size: 0.75rem;
+        font-size: 0.88rem;
         font-weight: 700;
       }
 
@@ -1662,7 +1668,9 @@
           flex: 1 1 calc(50% - 6px);
           justify-content: center;
           text-align: center;
-          padding: 0 10px;
+          padding: 0 12px;
+          height: 46px;
+          font-size: 0.84rem;
         }
 
         .custom-time {
@@ -1973,14 +1981,11 @@
               <form id="voucher-form" class="form-grid">
                 <div class="field">
                   <label for="voucher-code">Voucher Code</label>
-                  <div class="input-action">
-                    <input id="voucher-code" type="text" placeholder="5 letters/numbers" maxlength="5" minlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="characters" required />
-                    <button class="auto-button" id="auto-generate" type="button">Auto-Generate</button>
-                  </div>
+                  <input id="voucher-code" type="text" placeholder="Auto-generated" maxlength="5" minlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="characters" readonly required />
                 </div>
                 <div class="field">
                   <label for="voucher-password">Password</label>
-                  <input id="voucher-password" type="text" placeholder="4-digit password" maxlength="4" minlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" required />
+                  <input id="voucher-password" type="text" placeholder="Auto-generated" maxlength="4" minlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" readonly required />
                 </div>
                 <div class="field full">
                   <span class="field-label">Access duration</span>
@@ -2336,7 +2341,6 @@
         password: document.getElementById("voucher-password"),
         customTime: document.getElementById("custom-time"),
         customHours: document.getElementById("custom-hours"),
-        autoGenerate: document.getElementById("auto-generate"),
         editBackdrop: document.getElementById("edit-backdrop"),
         editForm: document.getElementById("edit-form"),
         editCode: document.getElementById("edit-code"),
@@ -2756,13 +2760,7 @@
         }
       }
 
-      document.getElementById("auto-generate").addEventListener("click", randomCode);
-      elements.code.addEventListener("input", () => {
-        elements.code.value = elements.code.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
-      });
-      elements.password.addEventListener("input", () => {
-        elements.password.value = elements.password.value.replace(/[^0-9]/g, "").slice(0, 4);
-      });
+      // Voucher code/password are auto-generated (no manual entry).
       elements.editCode.addEventListener("input", () => {
         elements.editCode.value = elements.editCode.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
       });
@@ -2809,6 +2807,7 @@
           selectedDuration = 1;
           setDuration(document.getElementById("duration-pills"), 1);
           elements.customTime.classList.remove("visible");
+          randomCode();
         } catch (error) {
           showToast(error.message);
         } finally {
@@ -3024,6 +3023,7 @@
         if (actionButton) showToast("Client session terminated");
       });
 
+      randomCode();
       renderTable();
       refreshData();
       setInterval(refreshData, 5000);
