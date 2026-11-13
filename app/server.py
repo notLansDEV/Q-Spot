@@ -18,6 +18,7 @@ UPLINK = os.environ.get("UPLINK", "")
 HTML_FILE = ROOT / "app" / "index.html"
 STATUS_FILE = ROOT / "app" / "status.html"
 ADMIN_FILE = ROOT / "app" / "admin.html"
+TERMS_FILE = ROOT / "app" / "Terms_&_Privacy.html"
 ADMIN_SESSIONS = {}
 BYPASS_COMMENT = "qspot-client"
 LOCK = threading.Lock()
@@ -42,10 +43,16 @@ def init_db():
         )""")
         columns = {row["name"] for row in c.execute("PRAGMA table_info(vouchers)")}
         if "expires" not in columns:
-            # Persist the absolute end time so a voucher can be used again after
-            # logging out without restarting its full duration.
             c.execute("ALTER TABLE vouchers ADD COLUMN expires REAL NOT NULL DEFAULT 0")
             c.execute("UPDATE vouchers SET expires=created+minutes*60 WHERE used=1")
+        if "bound" not in columns:
+            c.execute("ALTER TABLE vouchers ADD COLUMN bound TEXT NOT NULL DEFAULT ''")
+            c.execute("""UPDATE vouchers SET bound=COALESCE(
+                (SELECT s.mac FROM sessions s WHERE s.username=vouchers.username
+                 AND s.mac<>'' ORDER BY s.id DESC LIMIT 1),
+                (SELECT s.ip FROM sessions s WHERE s.username=vouchers.username
+                 ORDER BY s.id DESC LIMIT 1), '')
+                WHERE used=1""")
 
 def run_cmd(args):
     try:
@@ -118,11 +125,11 @@ def masquerade_present():
 def inbound_ttl_present():
     """Replies from some shared uplinks arrive with TTL 1; restore a usable TTL."""
     return bool(UPLINK and check_rule(
-        "mangle", "PREROUTING", ["-i", UPLINK, "-d", SUBNET, "-j", "TTL", "--ttl-set", "64"]))
+        "mangle", "PREROUTING", ["-i", UPLINK, "-j", "TTL", "--ttl-set", "64"]))
 
 def outbound_ttl_present():
     return bool(UPLINK and check_rule(
-        "mangle", "POSTROUTING", ["-s", SUBNET, "-o", UPLINK, "-j", "TTL", "--ttl-set", "64"]))
+        "mangle", "POSTROUTING", ["-s", SUBNET, "-o", UPLINK, "-j", "TTL", "--ttl-set", "65"]))
 
 def portal_bypass_present(ip):
     if os.geteuid() != 0 or not re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", ip):
@@ -196,14 +203,17 @@ def ensure_portal_firewall():
     if not masquerade_present():
         ok = add_rule("nat", "POSTROUTING",
                       ["-s", SUBNET, "-o", UPLINK, "-j", "MASQUERADE"]) and ok
+    # Clean up legacy subnet-matched TTL rules if present
+    while check_rule("mangle", "PREROUTING", ["-i", UPLINK, "-d", SUBNET, "-j", "TTL", "--ttl-set", "64"]):
+        iptables(["-t", "mangle", "-D", "PREROUTING", "-i", UPLINK, "-d", SUBNET, "-j", "TTL", "--ttl-set", "64"])
+    while check_rule("mangle", "POSTROUTING", ["-s", SUBNET, "-o", UPLINK, "-j", "TTL", "--ttl-set", "64"]):
+        iptables(["-t", "mangle", "-D", "POSTROUTING", "-s", SUBNET, "-o", UPLINK, "-j", "TTL", "--ttl-set", "64"])
     if not inbound_ttl_present():
         ok = add_rule("mangle", "PREROUTING",
-                      ["-i", UPLINK, "-d", SUBNET, "-j", "TTL", "--ttl-set", "64"], 1) and ok
+                      ["-i", UPLINK, "-j", "TTL", "--ttl-set", "64"], 1) and ok
     if not outbound_ttl_present():
         ok = add_rule("mangle", "POSTROUTING",
-                      ["-s", SUBNET, "-o", UPLINK, "-j", "TTL", "--ttl-set", "64"]) and ok
-    # Keep the portal redirect below per-client RETURN rules so authorized
-    # clients are never sent back to the login page.
+                      ["-s", SUBNET, "-o", UPLINK, "-j", "TTL", "--ttl-set", "65"]) and ok
     if not check_rule("nat", "PREROUTING",
                       ["-i", AP_IFACE, "-p", "tcp", "--dport", "80",
                        "-j", "REDIRECT", "--to-ports", str(PORT)]):
@@ -216,26 +226,18 @@ def allow_ip(ip):
     if os.geteuid() != 0 or not re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", ip):
         return False
     ok = True
-    changed = False
     if not ip_allowed(ip):
         p = iptables(["-I", "QSPOT_FORWARD", "1", "-s", ip, "-j", "ACCEPT"])
         if not p or p.returncode != 0:
             ok = False
             detail = (p.stderr or p.stdout).strip() if p else "iptables could not be run"
             print(f"Q-Spot: could not allow forwarding for {ip}: {detail}", flush=True)
-        else:
-            changed = True
     if not portal_bypass_present(ip):
         p = iptables(bypass_rule("-I", ip))
         if not p or p.returncode != 0:
             ok = False
             detail = (p.stderr or p.stdout).strip() if p else "iptables could not be run"
             print(f"Q-Spot: could not bypass the captive portal for {ip}: {detail}", flush=True)
-        else:
-            changed = True
-    # Connections opened before authorization are still tracked as redirects to
-    # the portal. Drop those entries after allowing the IP, whether or not the
-    # firewall rules were already present (e.g. re-login on the same IP).
     flush = run_cmd(["conntrack", "-D", "-s", ip])
     if flush is None:
         print(f"Q-Spot: conntrack flush failed for {ip} (conntrack may be unavailable)", flush=True)
@@ -257,25 +259,35 @@ def block_ip(ip):
     run_cmd(["conntrack", "-D", "-s", ip])
 
 def activate_voucher(voucher, ip):
+    """Start a session for one device.
+
+    A voucher is bound to the first device that uses it. The same device may
+    log in again after logging out until the voucher expires, but the voucher
+    cannot be shared with a second device.
+    """
     now = time.time()
     expires = float(voucher["expires"] or 0)
+    identity = (mac_for(ip) or ip).strip().lower()
+    bound = (voucher["bound"] or "").strip().lower()
     if not int(voucher["used"]):
         expires = now + int(voucher["minutes"]) * 60
     elif expires <= now:
-        return False
+        return "expired"
+    elif bound and identity != bound:
+        return "in-use"
     mac = mac_for(ip)
     with db() as c:
-        c.execute("UPDATE vouchers SET used=1, expires=? WHERE id=?", (expires, voucher["id"]))
+        c.execute("UPDATE vouchers SET used=1, expires=?, bound=? WHERE id=?",
+                  (expires, bound or identity, voucher["id"]))
         c.execute("UPDATE sessions SET active=0 WHERE ip=? AND active=1", (ip,))
         c.execute("INSERT INTO sessions(username,ip,mac,started,expires,active) VALUES(?,?,?,?,?,1)",
                   (voucher["username"], ip, mac, now, expires))
     ensure_portal_firewall()
     if not allow_ip(ip):
         print(f"Q-Spot: session for {voucher['username']} is active, but the firewall rule for {ip} is missing.", flush=True)
-    # Force-clear any stale conntrack entries that survived the allow_ip flush.
     run_cmd(["conntrack", "-D", "-s", ip])
     run_cmd(["conntrack", "-D", "--orig-src", ip])
-    return True
+    return "ok"
 
 def expire_worker():
     while True:
@@ -288,8 +300,6 @@ def expire_worker():
                 block_ip(row["ip"])
 
 def enforce_worker():
-    # Re-apply the base forwarding path and per-client ACCEPT rules if another
-    # firewall reload removed them.
     while True:
         time.sleep(10)
         try:
@@ -414,13 +424,12 @@ class Handler(BaseHTTPRequestHandler):
             if not self.admin_ok(): return self.send_json({"error":"Admin login required."},401)
             with db() as c:
                 sessions = [dict(x) for x in c.execute("SELECT id,username,ip,mac,started,expires,active FROM sessions ORDER BY started DESC LIMIT 50")]
-                vouchers = [dict(x) for x in c.execute("SELECT id,username,password,minutes,created,used,revoked,expires FROM vouchers ORDER BY id DESC LIMIT 100")]
+                vouchers = [dict(x) for x in c.execute("SELECT id,username,password,minutes,created,used,revoked,expires,bound FROM vouchers ORDER BY id DESC LIMIT 100")]
             for voucher in vouchers:
                 qr = QR_DIR / f"qspot-{voucher['id']}.png"
                 voucher["qr"] = f"/qr/{qr.name}" if qr.exists() else ""
             self.send_json({"sessions":sessions,"vouchers":vouchers})
         elif path == "/api/diag":
-            # Loopback-only diagnostic used to inspect the live forwarding path.
             if client_ip(self) not in ("127.0.0.1", "::1"):
                 return self.send_json({"error":"Not found"},404)
             def rules(args):
@@ -455,6 +464,8 @@ class Handler(BaseHTTPRequestHandler):
             })
         elif path in ("/connected", "/connected.html", "/status", "/status.html"):
             self.send_html(STATUS_FILE.read_text())
+        elif path in ("/terms", "/terms.html", "/terms-policy", "/Terms_&_Privacy.html"):
+            self.send_html(TERMS_FILE.read_text())
         elif path.startswith("/qr/"):
             name = Path(path).name
             if not re.fullmatch(r"qspot-\d+\.png",name): return self.send_json({"error":"Not found"},404)
@@ -481,8 +492,11 @@ class Handler(BaseHTTPRequestHandler):
             if not v: return self.send_json({"error":"Wrong username or password."},401)
             if int(v["used"]) and float(v["expires"] or 0) <= time.time():
                 return self.send_json({"error":"This voucher has expired."},401)
-            if not activate_voucher(v,client_ip(self)):
+            result = activate_voucher(v,client_ip(self))
+            if result == "expired":
                 return self.send_json({"error":"This voucher has expired."},401)
+            if result == "in-use":
+                return self.send_json({"error":"This voucher is already assigned to another device."},409)
             self.send_json({"redirect":"/status.html"})
         elif path == "/api/redeem":
             try: data=json_body(self)
@@ -493,8 +507,11 @@ class Handler(BaseHTTPRequestHandler):
             if not v: return self.send_json({"error":"This QR voucher is invalid or has been revoked."},401)
             if int(v["used"]) and float(v["expires"] or 0) <= time.time():
                 return self.send_json({"error":"This QR voucher has expired."},401)
-            if not activate_voucher(v,client_ip(self)):
+            result = activate_voucher(v,client_ip(self))
+            if result == "expired":
                 return self.send_json({"error":"This QR voucher has expired."},401)
+            if result == "in-use":
+                return self.send_json({"error":"This voucher is already assigned to another device."},409)
             self.send_json({"redirect":"/status.html"})
         elif path == "/api/logout":
             ip=client_ip(self)
@@ -532,7 +549,7 @@ class Handler(BaseHTTPRequestHandler):
             if not re.fullmatch(r"[0-9]{4}", password):
                 return self.send_json({"error":"Voucher password must be exactly 4 numbers."},400)
             with db() as c:
-                old=c.execute("SELECT username,minutes,expires FROM vouchers WHERE id=?",(vid,)).fetchone()
+                old=c.execute("SELECT username,password,minutes,expires FROM vouchers WHERE id=?",(vid,)).fetchone()
                 if not old: return self.send_json({"error":"Voucher not found."},404)
                 clash=c.execute("SELECT id FROM vouchers WHERE username=? AND id<>?",(username,vid)).fetchone()
                 if clash: return self.send_json({"error":"That voucher code is already in use."},400)
@@ -543,8 +560,12 @@ class Handler(BaseHTTPRequestHandler):
                     expires=now+minutes*60
                 else:
                     expires=0
-                c.execute("UPDATE vouchers SET username=?,password=?,minutes=?,expires=? WHERE id=?",
-                          (username,password,minutes,expires,vid))
+                if password != old["password"]:
+                    c.execute("UPDATE vouchers SET username=?,password=?,minutes=?,expires=?,bound='' WHERE id=?",
+                              (username,password,minutes,expires,vid))
+                else:
+                    c.execute("UPDATE vouchers SET username=?,password=?,minutes=?,expires=? WHERE id=?",
+                              (username,password,minutes,expires,vid))
                 c.execute("UPDATE sessions SET username=? WHERE username=?",(username,old["username"]))
                 if expires:
                     c.execute("UPDATE sessions SET expires=? WHERE username=? AND active=1",(expires,username))
@@ -583,8 +604,6 @@ class Handler(BaseHTTPRequestHandler):
             ADMIN_SESSIONS.pop(sid,None)
             self.send_json({"ok":True},headers={"Set-Cookie":"qspot_admin=; HttpOnly; Path=/; Max-Age=0"})
         elif path == "/api/scan":
-            # Mobile browsers can open their native camera via input[capture] even on a local HTTP portal.
-            # Decode the captured image on the gateway with zbarimg.
             length=int(self.headers.get("Content-Length","0"))
             if length > 8*1024*1024: return self.send_json({"error":"Image is too large."},413)
             body=self.rfile.read(length)
@@ -611,12 +630,12 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     init_db()
-    if not ADMIN_PASS:
-        raise SystemExit("ADMIN_PASS is missing. Run q-spot.sh to configure the admin account.")
     ensure_portal_firewall()
-    threading.Thread(target=expire_worker,daemon=True).start()
-    threading.Thread(target=enforce_worker,daemon=True).start()
-    print(f"Q-Spot portal: http://{GATEWAY}:{PORT}",flush=True)
-    ThreadingHTTPServer(("0.0.0.0",PORT),Handler).serve_forever()
+    threading.Thread(target=expire_worker, daemon=True).start()
+    threading.Thread(target=enforce_worker, daemon=True).start()
+    server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
+    print(f"Q-Spot portal listening on 0.0.0.0:{PORT} (gateway {GATEWAY})", flush=True)
+    server.serve_forever()
 
-if __name__=="__main__": main()
+if __name__ == "__main__":
+    main()

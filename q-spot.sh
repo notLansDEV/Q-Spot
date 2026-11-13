@@ -357,8 +357,6 @@ get_uplink_channel() {
 
     if (( HOTSPOT_CHANNEL <= 14 )); then
         HOSTAPD_HW_MODE="g"
-        # Do not use a bare arithmetic && at the end of this function:
-        # with `set -e`, channel 6 would make the function return status 1.
         if (( HOTSPOT_CHANNEL == 14 )); then
             HOSTAPD_HW_MODE="b"
         fi
@@ -366,7 +364,6 @@ get_uplink_channel() {
         HOSTAPD_HW_MODE="a"
     fi
 
-    # A successful channel lookup must always return success.
     return 0
 }
 
@@ -382,16 +379,11 @@ create_or_prepare_ap_interface() {
 
     log "Preparing virtual AP interface $AP_IFACE..."
     if ! iw dev "$AP_IFACE" info >/dev/null 2>&1; then
-        # Some drivers/NetworkManager combinations immediately register the new
-        # netdev as managed. We release it from NM and explicitly switch its type.
         if ! iw dev "$UPLINK" interface add "$AP_IFACE" type __ap; then
-            # A race can create the interface even when the command reports an error.
             iw dev "$AP_IFACE" info >/dev/null 2>&1 || die "Could not create $AP_IFACE. Check iw/driver logs."
         fi
     fi
 
-    # This ordering is important on this Manjaro adapter: mark unmanaged first,
-    # then bring it down, then explicitly set AP mode.
     if have nmcli; then
         nmcli device set "$AP_IFACE" managed no >/dev/null 2>&1 || \
             warn "NetworkManager did not confirm unmanaged state for $AP_IFACE; continuing with explicit AP-mode check."
@@ -504,21 +496,19 @@ setup_firewall() {
     # Let clients reach the local DHCP/DNS/portal services.
     ensure_rule_first filter INPUT -i "$AP_IFACE" -j "$FILTER_INPUT_CHAIN"
 
-    # Redirect ordinary HTTP requests to the captive portal. HTTPS is not
-    # intercepted; devices use their OS captive-portal detection mechanism.
+    # Redirect ordinary HTTP requests to the captive portal.
     ensure_rule_first nat PREROUTING -i "$AP_IFACE" -p tcp --dport 80 -j REDIRECT --to-ports "$PORTAL_PORT"
 
     # NAT only applies to traffic that passes the voucher-gated FORWARD chain.
     ensure_rule_first nat POSTROUTING -s "$SUBNET" -o "$UPLINK" -j MASQUERADE
 
-    # Some shared uplinks (the café AP here) rewrite the TTL of every reply to
-    # 1 to block connection sharing. Locally delivered packets ignore TTL, so
-    # the host still works, but forwarded replies are dropped by the kernel's
-    # forward TTL check before they ever reach a guest. Restore a normal TTL on
-    # the way in, and normalize it on the way out so forwarded traffic looks
-    # identical to the host's own traffic.
-    ensure_rule_first mangle PREROUTING -i "$UPLINK" -d "$SUBNET" -j TTL --ttl-set 64
-    ensure_rule_first mangle POSTROUTING -s "$SUBNET" -o "$UPLINK" -j TTL --ttl-set 64
+    # Restore a normal TTL on all inbound uplink traffic before un-DNAT occurs
+    # in nat PREROUTING, and normalize outbound forwarded traffic to TTL 65
+    # (which decrements to 64 on the wire) so upstream APs don't drop it.
+    delete_rule_all mangle PREROUTING -i "$UPLINK" -d "$SUBNET" -j TTL --ttl-set 64
+    delete_rule_all mangle POSTROUTING -s "$SUBNET" -o "$UPLINK" -j TTL --ttl-set 64
+    ensure_rule_first mangle PREROUTING -i "$UPLINK" -j TTL --ttl-set 64
+    ensure_rule_first mangle POSTROUTING -s "$SUBNET" -o "$UPLINK" -j TTL --ttl-set 65
 }
 
 remove_firewall() {
@@ -526,12 +516,15 @@ remove_firewall() {
     remove_client_bypasses
     delete_rule_all filter INPUT -i "$AP_IFACE" -j "$FILTER_INPUT_CHAIN"
     delete_rule_all filter FORWARD -i "$AP_IFACE" -o "$UPLINK" -j "$FILTER_FORWARD_CHAIN"
+    delete_rule_all filter FORWARD -i "$UPLINK" -o "$AP_IFACE" -d "$SUBNET" -j ACCEPT
     delete_rule_all filter FORWARD -i "$UPLINK" -o "$AP_IFACE" -d "$SUBNET" \
         -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
     delete_rule_all nat PREROUTING -i "$AP_IFACE" -p tcp --dport 80 -j REDIRECT --to-ports "$PORTAL_PORT"
     delete_rule_all nat POSTROUTING -s "$SUBNET" -o "$UPLINK" -j MASQUERADE
     delete_rule_all mangle PREROUTING -i "$UPLINK" -d "$SUBNET" -j TTL --ttl-set 64
+    delete_rule_all mangle PREROUTING -i "$UPLINK" -j TTL --ttl-set 64
     delete_rule_all mangle POSTROUTING -s "$SUBNET" -o "$UPLINK" -j TTL --ttl-set 64
+    delete_rule_all mangle POSTROUTING -s "$SUBNET" -o "$UPLINK" -j TTL --ttl-set 65
 
     iptables -w 5 -F "$FILTER_INPUT_CHAIN" 2>/dev/null || true
     iptables -w 5 -X "$FILTER_INPUT_CHAIN" 2>/dev/null || true
@@ -579,8 +572,6 @@ start_qspot() {
     write_dnsmasq_config
     setup_firewall
 
-    # Portal is started before hostapd, so the login page is ready as soon as
-    # clients begin associating with the access point.
     if ss -H -ltn "sport = :$PORTAL_PORT" 2>/dev/null | grep -q .; then
         if ! process_from_pidfile "$PORTAL_PID" "server.py" >/dev/null 2>&1; then
             die "TCP port $PORTAL_PORT is already occupied by another process."
@@ -692,7 +683,6 @@ cleanup_on_failed_start() {
     if (( rc != 0 )) && (( STARTUP_IN_PROGRESS == 1 )); then
         trap - EXIT ERR
         warn "Startup failed (exit code $rc) near command: ${BASH_COMMAND:-unknown}; cleaning up Q-Spot resources."
-        # Stop only Q-Spot's own daemons, firewall rules and virtual interface.
         stop_qspot || true
     fi
     return "$rc"
