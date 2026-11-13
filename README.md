@@ -1,89 +1,122 @@
-# Q-Spot — Wi-Fi rolling voucher portal (Manjaro / NetworkManager)
+# Q-Spot --- Wi-Fi Rolling Voucher Portal
 
-<p align="center">
-  <img src="app/images/logo_qspot.png" alt="Q-Spot logo" width="160" />
-</p>
+Q-Spot is a lightweight Wi-Fi hotspot and captive portal manager built
+for Manjaro/Arch Linux and NetworkManager. It provisions a virtual
+Access Point (AP) interface, manages NAT/DHCP sharing, issues
+time-limited QR vouchers, and automatically expires client sessions.
 
-Q-Spot replaces the previous hotspot launcher: it creates its own AP interface, runs DHCP/DNS and NAT, starts the captive portal, issues QR vouchers, and expires sessions automatically.
+------------------------------------------------------------------------
 
-## Run
+## Quick Start
 
-1. Extract this folder somewhere writable.
-2. Open a terminal in the `q-spot` folder.
-3. Run:
+1.  Extract the project directory to a writable location and open a
+    terminal inside `q-spot`:
 
-```bash
-sudo ./q-spot.sh
+    ``` bash
+    cd q-spot
+    sudo ./q-spot.sh
+    ```
+
+2.  On the initial run, you will be prompted to configure:
+
+    -   **Internet uplink interface** (auto-detected from the default
+        route, e.g., `wlo1`)
+    -   **Hotspot SSID** (default: `Q-Spot`)
+    -   **Hotspot WPA2 password** (minimum 8 characters)
+    -   **Admin username** (default: `admin`)
+    -   **Admin password** (defaults to an auto-generated password)
+
+The launcher automatically installs missing Manjaro/Arch dependencies,
+starts the AP and captive portal, opens the local admin login page, and
+launches the terminal manager (navigate with `j`/`k` or arrow keys,
+`Enter` to select, `q` to quit).
+
+------------------------------------------------------------------------
+
+## CLI Commands
+
+``` bash
+sudo ./q-spot.sh           # Start services and open the terminal manager
+sudo ./q-spot.sh start     # Same as above
+sudo ./q-spot.sh status    # Check AP, firewall, and portal status
+sudo ./q-spot.sh manager   # Attach to the terminal manager while running
+sudo ./q-spot.sh logs      # View live portal logs
+sudo ./q-spot.sh stop      # Stop hotspot and clean up virtual interface
 ```
 
-First run asks for:
-- Internet uplink interface (auto-detected from the default route; e.g. `wlo1`)
-- Hotspot SSID (default `Q-Spot Hotspot`)
-- Admin username (default `admin`)
-- Admin password (defaults to a generated short password)
+### Default Network Configuration
 
-The Wi-Fi network is open (no Wi-Fi password); internet access is gated by vouchers instead.
+-   **Virtual AP Interface:** `qspot0`
+-   **Gateway IP:** `10.42.0.1/24`
+-   **Portal Port:** `8081`
 
-The script installs Manjaro/Arch packages if missing, starts the AP and portal, then prints the portal URL. Run:
+Modify `config.env` to customize these values. Stopping Q-Spot tears
+down the virtual AP without disrupting your upstream Wi-Fi connection.
 
-```bash
-sudo ./q-spot.sh manager          # open the terminal voucher manager
-http://10.42.0.1:8081/             # guest portal / admin login
-http://10.42.0.1:8081/admin.html   # admin dashboard
-```
+------------------------------------------------------------------------
 
-The manager supports `j`/`k` or arrow keys, Enter, and `q`.
+## How It Works
 
-## Commands
+### Guest & Admin Access
 
-```bash
-sudo ./q-spot.sh              # start the hotspot and portal (default)
-sudo ./q-spot.sh start        # same
-sudo ./q-spot.sh status
-sudo ./q-spot.sh manager           # open terminal manager if already running
-sudo ./q-spot.sh logs
-sudo ./q-spot.sh stop
-```
+-   **Connection:** Guests connect to the `Q-Spot` SSID using the WPA2
+    password; NetworkManager handles DHCP, DNS, and NAT.
+-   **Captive Portal:** HTTP requests redirect automatically to the
+    portal. If a device does not trigger the captive portal sheet
+    automatically, navigate to `http://10.42.0.1:8081`.
+-   **Authentication:** Guests log in using a 4-character voucher code
+    and 4-character password, or by scanning a one-time QR voucher.
+-   **Session Enforcement:** The countdown timer begins upon voucher
+    redemption, and `iptables` permits internet access exclusively for
+    that guest's IP address until expiration.
+-   **Admin Dashboard:** Administrators sign in using the same login
+    form on the portal page; entering admin credentials redirects to the
+    management dashboard.
 
-The script uses `qspot0` as a virtual AP interface, `10.42.0.1/24` as the gateway, and port `8081` for the portal. Adjust `config.env` to change these values. It leaves the upstream Wi-Fi connection alone on stop.
+### QR Code Scanning
 
-## Guest access
+Because standard browsers restrict live camera APIs over unencrypted
+HTTP, the portal's camera button triggers the mobile device's native
+photo capture (`<input type="file" capture>`). Uploaded images are
+decoded server-side using `zbarimg` (`zbar`). Guests can also scan
+vouchers directly using their phone's built-in camera app.
 
-- Guest joins the open `Q-Spot` hotspot (no Wi-Fi password).
-- Q-Spot runs its own DHCP/DNS (dnsmasq) and NAT/firewall rules on the AP interface.
-- HTTP captive-portal checks are redirected to the Q-Spot page. If a device does not pop up automatically, open `http://10.42.0.1:8081`.
-- Guests use a short 5-character username (letters/numbers) and 4-digit password, or scan the QR.
-- The timer starts on first login. Only that guest IP is allowed through the AP-to-uplink firewall rule. After login, guests land on `status.html` with their own username, IP, and live connection time.
-- Vouchers are one-to-one with a user device. Logging out ends the session but keeps the voucher's remaining time; the same device may sign in again until the voucher expires. A voucher cannot be shared with or transferred to a second device.
-- Admin login uses the exact same username/password fields as guests; matching admin credentials opens the admin dashboard at `admin.html`.
-- The Terms of Service & Acceptable Use Policy is served at `/terms` from `app/Terms_&_Privacy.html`; guests accept it before logging in (see the footer checkbox on the login page).
+------------------------------------------------------------------------
 
-## QR camera button
+## Security & Operational Notes
 
-The portal camera button opens the phone's native camera/photo capture using the file input capture hint, then the gateway decodes the photo using `zbarimg` (installed as `zbar`). Browser live-camera APIs are restricted on ordinary HTTP pages, so this approach avoids requiring HTTPS for the local hotspot portal. If the phone/browser does not offer camera capture, scan the QR using the phone's regular camera app instead.
+-   **Authorization:** Deploy only on networks you own or are explicitly
+    authorized to manage.
+-   **Hardware Concurrency:** Simultaneous AP + Station mode depends on
+    your Wi-Fi chipset and driver. If your adapter cannot maintain an
+    upstream Wi-Fi connection while broadcasting an AP, use Ethernet or
+    a secondary USB Wi-Fi adapter for the uplink.
+-   **Captive Portal Behavior:** HTTPS traffic cannot be transparently
+    intercepted; auto-popup behavior varies across Android and iOS
+    devices.
+-   **Client Tracking:** Session authorization is tied to the client's
+    IPv4 address. DHCP lease changes or MAC randomization may require
+    re-authentication.
+-   **Privileges & Exposure:** The portal runs as `root` to manage
+    `iptables` rules and is designed strictly for local LAN deployment.
+    **Do not expose port `8081` to the public internet or upstream
+    network.**
+-   **Credentials:** Keep `config.env` restricted, as it stores
+    plaintext hotspot and admin credentials.
+-   **Troubleshooting:** If startup fails, inspect `data/portal.log` and
+    run `sudo ./q-spot.sh status` or verify routing with `ip route` and
+    `nmcli`.
 
-## Important limitations / safety
+------------------------------------------------------------------------
 
-- This is a prototype for a network you own or are authorized to administer. Get permission before sharing or reselling upstream café internet.
-- AP+station concurrency depends on the Wi-Fi adapter/driver. Some adapters cannot stay connected to upstream Wi-Fi while hosting an AP. If so, use Ethernet for uplink or a second Wi-Fi adapter.
-- Some shared uplinks rewrite the TTL of all replies to 1 to block connection sharing. Locally delivered traffic ignores TTL, so the host still works, but forwarded guest traffic is dropped by the kernel's forward TTL check. Q-Spot restores a normal TTL on the uplink return path (`mangle PREROUTING`) and normalizes it on the way out.
-- Authorization currently follows the client's IPv4 address. DHCP address changes, MAC randomization, and reconnect behavior need additional hardening.
-- HTTPS traffic cannot be transparently redirected. Captive portal auto-popup varies by Android/iOS; manual HTTP portal URL is the fallback.
-- The server currently runs as root because it changes iptables. Do not expose port 8081 on the public internet or café uplink.
-- This MVP does not yet include production-grade HTTPS, CSRF protection, rate limiting, multi-admin roles, or hardened persistent admin sessions.
-- The firewall logic assumes the AP interface routes to the selected uplink interface. Verify with `ip route`, `nmcli`, and the logs before using with guests.
-- Keep `config.env` private; it contains the hotspot and admin passwords.
-- If a start attempt fails, inspect `data/portal.log` and run `sudo ./q-spot.sh status`.
+## Project Structure
 
-## Files
-
-- `q-spot.sh`: one-command launcher and hotspot/firewall setup/teardown.
-- `app/server.py`: portal, voucher/session database, timer enforcement, QR scan decoding, firewall repair.
-- `app/index.html`: guest login page, QR camera/scan, terms checkbox.
-- `app/admin.html`: admin voucher and live-session dashboard.
-- `app/status.html`: guest status page with live session details.
-- `app/Terms_&_Privacy.html`: Terms of Service & Acceptable Use Policy served at `/terms`.
-- `.gitignore`: ignores Python caches, runtime data (voucher DB, logs, leases) and secrets.
-- `qspot-manager.py`: Vim/LazyVim-inspired terminal manager.
-- `config.env`: local runtime configuration (not tracked).
-- `data/`: runtime state directory (not tracked).
+-   `q-spot.sh` --- Entrypoint script for dependency checks, AP
+    provisioning, `iptables` rules, and teardown.
+-   `app/server.py` --- Backend web server, SQLite voucher/session
+    store, timer enforcement, and `zbarimg` QR decoder.
+-   `app/index.html` --- Guest captive portal login interface.
+-   `app/admin.html` --- Admin dashboard for voucher generation, session
+    monitoring, and analytics.
+-   `qspot-manager.py` --- Keyboard-driven terminal UI for service
+    control and monitoring.
