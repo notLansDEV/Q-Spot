@@ -1,6 +1,6 @@
 # Q-Spot — Wi-Fi rolling voucher portal (Manjaro / NetworkManager)
 
-Q-Spot replaces the previous hotspot launcher: it creates its own AP interface and NetworkManager shared connection, starts the captive portal, issues one-time QR vouchers, and expires sessions automatically.
+Q-Spot replaces the previous hotspot launcher: it creates its own AP interface, runs DHCP/DNS and NAT, starts the captive portal, issues QR vouchers, and expires sessions automatically.
 
 ## Run
 
@@ -36,12 +36,13 @@ The script uses `qspot0` as a virtual AP interface, `10.42.0.1/24` as the gatewa
 
 ## Guest access
 
-- Guest joins the `Q-Spot` hotspot using its WPA2 password.
-- NetworkManager shared mode provides DHCP/DNS and NAT.
+- Guest joins the open `Q-Spot` hotspot (no Wi-Fi password).
+- Q-Spot runs its own DHCP/DNS (dnsmasq) and NAT/firewall rules on the AP interface.
 - HTTP captive-portal checks are redirected to the Q-Spot page. If a device does not pop up automatically, open `http://10.42.0.1:8081`.
-- Guests use a short 4-character username and 4-character password, or scan the one-time QR.
-- The timer starts when the voucher is redeemed. Only that guest IP is allowed through the AP-to-uplink firewall rule.
-- Admin login uses the exact same username/password fields as guests; matching admin credentials opens the admin dashboard.
+- Guests use a short 5-character username (letters/numbers) and 4-digit password, or scan the QR.
+- The timer starts on first login. Only that guest IP is allowed through the AP-to-uplink firewall rule. After login, guests land on `status.html` with their own username, IP, and live connection time.
+- Logging out ends the session but keeps the voucher's remaining time; the same voucher can log in again until it expires.
+- Admin login uses the exact same username/password fields as guests; matching admin credentials opens the admin dashboard at `admin.html`.
 
 ## QR camera button
 
