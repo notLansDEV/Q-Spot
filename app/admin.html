@@ -1973,9 +1973,9 @@
             <div class="generator-form">
               <div class="section-heading">
                 <div>
-                  <p class="eyebrow">Voucher generator</p>
+                  <p class="eyebrow">Voucher Manager</p>
                   <h2 id="generator-title">Create guest access</h2>
-                  <p class="section-note">Generate secure credentials and a unique QR access card.</p>
+                  <p class="section-note">Auto-generate secure credentials and a unique QR access card. Each voucher code can be used only once and is never reused.</p>
                 </div>
               </div>
               <form id="voucher-form" class="form-grid">
@@ -2124,6 +2124,28 @@
               </div>
             </form>
           </section>
+
+          <section class="card" aria-labelledby="archive-title">
+            <div class="section-card-head">
+              <div>
+                <h2 id="archive-title">Deleted Voucher Archive</h2>
+                <p>Deleted voucher codes are archived for 30 days, then permanently removed. Codes remain reserved for life.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Voucher Code</th>
+                    <th>Deleted</th>
+                    <th>Permanent deletion</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="archive-body"></tbody>
+              </table>
+            </div>
+          </section>
         </section>
       </main>
     </div>
@@ -2261,6 +2283,7 @@
       let editingId = null;
       let toastTimer;
       let users = [];
+      let archivedVouchers = [];
       let sessions = [];
       const tableQuery = { current: "" };
 
@@ -2317,7 +2340,14 @@
             reveal: previous.get(voucher.id)?.reveal || false
           };
         });
+        archivedVouchers = (data.archived || []).map((voucher) => ({
+          id: voucher.id,
+          code: voucher.username,
+          deletedAt: (voucher.deleted_at || 0) * 1000,
+          purgeAt: ((voucher.deleted_at || 0) + 30 * 24 * 3600) * 1000
+        }));
         renderTable();
+        renderArchive();
       }
 
       async function refreshData() {
@@ -2375,7 +2405,8 @@
         statCollection: document.getElementById("stat-collection"),
         statSales: document.getElementById("stat-sales"),
         statTime: document.getElementById("stat-time"),
-        headerActive: document.getElementById("header-active")
+        headerActive: document.getElementById("header-active"),
+        archiveBody: document.getElementById("archive-body")
       };
 
       function escapeHTML(value) {
@@ -2452,6 +2483,26 @@
         if (!query) return true;
         const haystack = [user.code, user.password, user.device, user.status].join(" ").toLowerCase();
         return haystack.includes(query);
+      }
+
+      function renderArchive() {
+        if (!elements.archiveBody) return;
+        if (!archivedVouchers.length) {
+          elements.archiveBody.innerHTML = '<tr><td colspan="4" class="empty-state">No deleted vouchers in the archive.</td></tr>';
+          return;
+        }
+        const now = Date.now();
+        elements.archiveBody.innerHTML = archivedVouchers.map((item) => {
+          const msLeft = Math.max(0, item.purgeAt - now);
+          const daysLeft = Math.ceil(msLeft / 86400000);
+          const when = daysLeft <= 0 ? 'Pending removal' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
+          return `<tr>
+            <td><div class="user-cell"><span>${escapeHTML(item.code)}</span></div></td>
+            <td class="stamp-cell">${escapeHTML(formatDateTime(item.deletedAt))}</td>
+            <td class="stamp-cell">${escapeHTML(formatDateTime(item.purgeAt))}<span class="stamp-sub">${escapeHTML(when)}</span></td>
+            <td><span class="status-pill expired">Archived</span></td>
+          </tr>`;
+        }).join('');
       }
 
       function renderTable() {
@@ -2840,10 +2891,10 @@
           elements.largePreviewMeta.innerHTML = `Password: <span>${escapeHTML(user.password)}</span> · ${escapeHTML(durationLabel(user.hours))}<br><span>${escapeHTML(remainingExact(user))}</span>`;
           openModal(elements.largeQrBackdrop);
         }
-        if (button.dataset.action === "remove" && confirm(`Remove ${user.code} and disconnect this voucher?`)) {
+        if (button.dataset.action === "remove" && confirm(`Delete ${user.code}? It will be archived for 30 days (code remains reserved for life) and any active session will be disconnected.`)) {
           try {
             await api("/api/admin/delete", { id: user.id });
-            showToast(`${user.code} was removed.`);
+            showToast(`${user.code} was moved to the archive.`);
             await refreshData();
           } catch (error) {
             showToast(error.message);
@@ -3039,6 +3090,7 @@
         });
         if (structuralChange) renderTable();
         else updateSummary();
+        renderArchive();
       }, 1000);
     </script>
   </body>
