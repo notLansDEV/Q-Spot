@@ -777,6 +777,161 @@
         font-weight: 500;
       }
 
+
+      /* Analytics */
+      .analytics-head {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .analytics-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .view-toggle {
+        display: inline-flex;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .view-btn {
+        height: 36px;
+        padding: 0 14px;
+        border: 0;
+        border-right: 1px solid var(--border);
+        background: #fff;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .view-btn:last-child {
+        border-right: 0;
+      }
+
+      .view-btn.active {
+        background: var(--blue);
+        color: #fff;
+      }
+
+      .analytics-date {
+        height: 36px;
+        padding: 0 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 12px;
+        color: var(--ink);
+        background: #fff;
+      }
+
+      .analytics-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        margin: 4px 0 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+      }
+
+      .legend-swatch,
+      .summary-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 4px;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+
+      .swatch-1h { background: #2563eb; }
+      .swatch-1d { background: #10b981; }
+      .swatch-2d { background: #f59e0b; }
+
+      .analytics-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .summary-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .summary-chip strong {
+        font-size: 18px;
+        color: var(--ink);
+      }
+
+      .summary-chip span:last-child {
+        font-weight: 600;
+      }
+
+      .summary-total {
+        justify-content: center;
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+      }
+
+      .analytics-chart {
+        height: 240px;
+      }
+
+      .stacked-bar {
+        width: 100%;
+        max-width: 36px;
+        height: var(--h);
+        display: flex;
+        flex-direction: column-reverse;
+        border-radius: 6px 6px 0 0;
+        overflow: hidden;
+        background: #eef2f7;
+      }
+
+      .stacked-bar .seg {
+        width: 100%;
+      }
+
+      .seg-1h { background: #2563eb; }
+      .seg-1d { background: #10b981; }
+      .seg-2d { background: #f59e0b; }
+
+      .analytics-note {
+        margin: 10px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 768px) {
+        .analytics-summary {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .analytics-controls {
+          width: 100%;
+        }
+      }
+
       /* Table */
       .table-card {
         background: var(--surface);
@@ -2041,26 +2196,42 @@
         <section class="tab-panel" id="tab-analytics" hidden>
           <div class="page-header">
             <div class="page-title">
-              <h1>Revenue Reports</h1>
-              <p>Coin slot collections and voucher sales over time.</p>
+              <h1>Analytics</h1>
+              <p>Voucher sales and plan counts by day, week, or month.</p>
             </div>
           </div>
 
           <section class="card" aria-labelledby="analytics-title">
-            <div class="section-card-head">
+            <div class="section-card-head analytics-head">
               <div>
-                <h2 id="analytics-title">Revenue Performance</h2>
-                <p>Coin slot collections and voucher sales over 7 days</p>
+                <h2 id="analytics-title">Voucher Analytics</h2>
+                <p id="analytics-subtitle">Sales by plan type for the selected period.</p>
               </div>
-              <select
-                style="border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 12px; background: #fff"
-                aria-label="Revenue range"
-              >
-                <option>Last 7 Days</option>
-                <option>Last 30 Days</option>
-              </select>
+              <div class="analytics-controls">
+                <div class="view-toggle" role="group" aria-label="Analytics view">
+                  <button class="view-btn active" type="button" data-view="day">Day</button>
+                  <button class="view-btn" type="button" data-view="week">Week</button>
+                  <button class="view-btn" type="button" data-view="month">Month</button>
+                </div>
+                <input id="analytics-date" class="analytics-date" type="date" aria-label="Select date" />
+              </div>
             </div>
-            <div class="chart-container" id="revenue-chart-analytics"></div>
+
+            <div class="analytics-legend" aria-label="Plan legend">
+              <span class="legend-item"><span class="legend-swatch swatch-1h"></span>1 Hour</span>
+              <span class="legend-item"><span class="legend-swatch swatch-1d"></span>1 Day</span>
+              <span class="legend-item"><span class="legend-swatch swatch-2d"></span>2 Days</span>
+            </div>
+
+            <div class="analytics-summary" aria-label="Selected day counts">
+              <div class="summary-chip"><span class="summary-dot swatch-1h"></span><strong id="count-1h">0</strong><span>1 Hour</span></div>
+              <div class="summary-chip"><span class="summary-dot swatch-1d"></span><strong id="count-1d">0</strong><span>1 Day</span></div>
+              <div class="summary-chip"><span class="summary-dot swatch-2d"></span><strong id="count-2d">0</strong><span>2 Days</span></div>
+              <div class="summary-chip summary-total"><strong id="count-total">0</strong><span>Total vouchers (selected day)</span></div>
+            </div>
+
+            <div class="chart-container analytics-chart" id="revenue-chart-analytics"></div>
+            <p class="analytics-note" id="analytics-note"></p>
           </section>
         </section>
 
@@ -2286,6 +2457,7 @@
       let archivedVouchers = [];
       let sessions = [];
       const tableQuery = { current: "" };
+      const analyticsState = { view: "day", date: new Date().toISOString().slice(0, 10) };
 
       async function api(url, body) {
         const response = await fetch(url, {
@@ -2406,7 +2578,14 @@
         statSales: document.getElementById("stat-sales"),
         statTime: document.getElementById("stat-time"),
         headerActive: document.getElementById("header-active"),
-        archiveBody: document.getElementById("archive-body")
+        archiveBody: document.getElementById("archive-body"),
+        analyticsDate: document.getElementById("analytics-date"),
+        analyticsNote: document.getElementById("analytics-note"),
+        analyticsSubtitle: document.getElementById("analytics-subtitle"),
+        count1h: document.getElementById("count-1h"),
+        count1d: document.getElementById("count-1d"),
+        count2d: document.getElementById("count-2d"),
+        countTotal: document.getElementById("count-total")
       };
 
       function escapeHTML(value) {
@@ -2560,7 +2739,32 @@
         if (diff === 0) el.classList.add("neutral");
       }
 
-      function renderRevenueCharts() {
+      function planBucket(minutes) {
+        if (minutes <= 60) return "1h";
+        if (minutes <= 1440) return "1d";
+        if (minutes <= 2880) return "2d";
+        return "other";
+      }
+
+      function vouchersInRange(start, end) {
+        return users.filter((user) => user.used && user.createdAt >= start && user.createdAt < end);
+      }
+
+      function planCounts(list) {
+        const counts = { "1h": 0, "1d": 0, "2d": 0, total: 0 };
+        list.forEach((user) => {
+          const b = planBucket(user.minutes);
+          if (counts[b] !== undefined) counts[b] += 1;
+          counts.total += 1;
+        });
+        return counts;
+      }
+
+      function startOfDay(date) {
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      }
+
+      function renderDashboardRevenueChart() {
         const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
         const now = new Date();
         const days = [];
@@ -2568,9 +2772,7 @@
           const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
           const start = d.getTime();
           const end = start + 86400000;
-          const amount = users
-            .filter((user) => user.used && user.createdAt >= start && user.createdAt < end)
-            .reduce((sum, user) => sum + priceFor(user.minutes), 0);
+          const amount = vouchersInRange(start, end).reduce((sum, user) => sum + priceFor(user.minutes), 0);
           days.push({ label: dayNames[d.getDay()], amount });
         }
         const max = Math.max(1, ...days.map((d) => d.amount));
@@ -2579,10 +2781,91 @@
           const title = `₱${d.amount.toLocaleString()}`;
           return `<div class="bar-column"><div class="bar" style="--h: ${h}%" title="${title}"></div><span class="bar-label">${d.label}</span></div>`;
         }).join("");
-        ["revenue-chart-dashboard","revenue-chart-analytics"].forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.innerHTML = html;
+        const el = document.getElementById("revenue-chart-dashboard");
+        if (el) el.innerHTML = html;
+      }
+
+      function renderAnalyticsChart() {
+        const container = document.getElementById("revenue-chart-analytics");
+        if (!container) return;
+        const selected = new Date(analyticsState.date + "T00:00:00");
+        if (Number.isNaN(selected.getTime())) return;
+        let periods = [];
+        let note = "";
+        let subtitle = "";
+
+        if (analyticsState.view === "day") {
+          for (let h = 0; h < 24; h += 1) {
+            const start = new Date(selected); start.setHours(h, 0, 0, 0);
+            const end = new Date(selected); end.setHours(h + 1, 0, 0, 0);
+            periods.push({ label: `${h}`, start: start.getTime(), end: end.getTime() });
+          }
+          subtitle = `Hourly sales by plan for ${selected.toLocaleDateString()}`;
+          note = "Bars show voucher sales per hour for the selected day, color-coded by plan (1 Hour / 1 Day / 2 Days).";
+        } else if (analyticsState.view === "week") {
+          const day = selected.getDay();
+          const diff = (day + 6) % 7; // Monday start
+          const monday = new Date(selected);
+          monday.setDate(selected.getDate() - diff);
+          const names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+          for (let i = 0; i < 7; i += 1) {
+            const d = new Date(monday); d.setDate(monday.getDate() + i);
+            const start = startOfDay(d).getTime();
+            periods.push({ label: names[i], start, end: start + 86400000 });
+          }
+          const endWeek = new Date(monday); endWeek.setDate(monday.getDate() + 6);
+          subtitle = `Daily sales by plan for week of ${monday.toLocaleDateString()} - ${endWeek.toLocaleDateString()}`;
+          note = "Bars show voucher sales per day for the selected week, color-coded by plan.";
+        } else {
+          const first = new Date(selected.getFullYear(), selected.getMonth(), 1);
+          const last = new Date(selected.getFullYear(), selected.getMonth() + 1, 0);
+          for (let d = 1; d <= last.getDate(); d += 1) {
+            const dayDate = new Date(selected.getFullYear(), selected.getMonth(), d);
+            const start = startOfDay(dayDate).getTime();
+            periods.push({ label: String(d), start, end: start + 86400000 });
+          }
+          subtitle = `Daily sales by plan for ${first.toLocaleString(undefined, { month: "long", year: "numeric" })}`;
+          note = "Bars show voucher sales per day for the selected month, color-coded by plan.";
+        }
+
+        const periodData = periods.map((p) => {
+          const list = vouchersInRange(p.start, p.end);
+          const byPlan = { "1h": 0, "1d": 0, "2d": 0 };
+          list.forEach((user) => {
+            const b = planBucket(user.minutes);
+            if (byPlan[b] !== undefined) byPlan[b] += priceFor(user.minutes);
+          });
+          const total = byPlan["1h"] + byPlan["1d"] + byPlan["2d"];
+          return { ...p, byPlan, total, counts: planCounts(list) };
         });
+
+        const max = Math.max(1, ...periodData.map((p) => p.total));
+        container.innerHTML = periodData.map((p) => {
+          const hPct = p.total <= 0 ? 4 : Math.max(6, Math.round((p.total / max) * 100));
+          const seg = (key, cls) => {
+            const val = p.byPlan[key];
+            if (val <= 0) return "";
+            const sh = (val / (p.total || 1)) * 100;
+            return `<span class="seg ${cls}" style="height:${sh}%" title="${key === "1h" ? "1 Hour" : key === "1d" ? "1 Day" : "2 Days"}: ₱${val.toLocaleString()}"></span>`;
+          };
+          const title = `1h: ${p.counts["1h"]} (₱${p.byPlan["1h"]}) · 1d: ${p.counts["1d"]} (₱${p.byPlan["1d"]}) · 2d: ${p.counts["2d"]} (₱${p.byPlan["2d"]})`;
+          return `<div class="bar-column" title="${escapeHTML(title)}"><div class="stacked-bar" style="--h:${hPct}%">${seg("1h","seg-1h")}${seg("1d","seg-1d")}${seg("2d","seg-2d")}</div><span class="bar-label">${escapeHTML(p.label)}</span></div>`;
+        }).join("");
+
+        // Selected day counts (always for analyticsState.date)
+        const dayStart = startOfDay(selected).getTime();
+        const dayCounts = planCounts(vouchersInRange(dayStart, dayStart + 86400000));
+        if (elements.count1h) elements.count1h.textContent = dayCounts["1h"];
+        if (elements.count1d) elements.count1d.textContent = dayCounts["1d"];
+        if (elements.count2d) elements.count2d.textContent = dayCounts["2d"];
+        if (elements.countTotal) elements.countTotal.textContent = dayCounts.total;
+        if (elements.analyticsNote) elements.analyticsNote.textContent = note;
+        if (elements.analyticsSubtitle) elements.analyticsSubtitle.textContent = subtitle;
+      }
+
+      function renderRevenueCharts() {
+        renderDashboardRevenueChart();
+        renderAnalyticsChart();
       }
 
       function updateSummary() {
@@ -3063,6 +3346,26 @@
         } catch (error) {
           showToast(error.message);
         }
+      });
+
+
+      // Analytics controls
+      if (elements.analyticsDate) {
+        elements.analyticsDate.value = analyticsState.date;
+        elements.analyticsDate.addEventListener("change", (event) => {
+          if (event.target.value) {
+            analyticsState.date = event.target.value;
+            renderAnalyticsChart();
+          }
+        });
+      }
+      document.querySelectorAll(".view-btn[data-view]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.view === analyticsState.view);
+        btn.addEventListener("click", () => {
+          analyticsState.view = btn.dataset.view;
+          document.querySelectorAll(".view-btn[data-view]").forEach((b) => b.classList.toggle("active", b === btn));
+          renderAnalyticsChart();
+        });
       });
 
       elements.exportBtn.addEventListener("click", () => exportLogs());
