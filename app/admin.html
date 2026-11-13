@@ -1,0 +1,1805 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eef3f9" />
+    <title>Wi-Fi Admin Control Panel</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17223b;
+        --muted: #667085;
+        --soft: #8a94a6;
+        --line: #e3e8f1;
+        --canvas: #edf2f8;
+        --card: #ffffff;
+        --field: #f8faff;
+        --primary: #2858d6;
+        --primary-dark: #1946bb;
+        --primary-soft: #eaf0ff;
+        --success: #087e6c;
+        --success-soft: #e6f7f3;
+        --warning: #9a6700;
+        --warning-soft: #fff5d8;
+        --danger: #c13b4d;
+        --danger-soft: #ffedf0;
+        --shadow: 0 16px 42px rgba(37, 57, 95, 0.08);
+        --focus: rgba(40, 88, 214, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.9), transparent 28%),
+          var(--canvas);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button,
+      input,
+      select,
+      a {
+        transition:
+          border-color 160ms ease,
+          background-color 160ms ease,
+          color 160ms ease,
+          box-shadow 160ms ease,
+          transform 160ms ease;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      a:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .app-shell {
+        width: min(100% - 40px, 1240px);
+        margin: 0 auto;
+        padding: 28px 0 42px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 22px;
+        margin-bottom: 24px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        gap: 13px;
+      }
+
+      .brand-mark {
+        display: grid;
+        flex: 0 0 auto;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+        border-radius: 13px;
+        color: #fff;
+        background: linear-gradient(145deg, #3569e8, #214fc2);
+        box-shadow: 0 8px 20px rgba(40, 88, 214, 0.24);
+      }
+
+      .brand-mark svg {
+        width: 25px;
+        height: 25px;
+      }
+
+      .brand h1 {
+        overflow: hidden;
+        margin: 0;
+        font-size: clamp(1.2rem, 2.6vw, 1.55rem);
+        letter-spacing: -0.035em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .brand p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        flex: 0 0 auto;
+        gap: 10px;
+      }
+
+      .live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        padding: 0 14px;
+        border: 1px solid #d8e8e4;
+        border-radius: 10px;
+        color: #176c60;
+        background: #f3fbf9;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .live-dot {
+        position: relative;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10a68f;
+      }
+
+      .live-dot::after {
+        position: absolute;
+        inset: -4px;
+        border: 1px solid #10a68f;
+        border-radius: 50%;
+        content: "";
+        animation: pulse 1.8s ease-out infinite;
+      }
+
+      @keyframes pulse {
+        from {
+          opacity: 0.7;
+          transform: scale(0.5);
+        }
+        to {
+          opacity: 0;
+          transform: scale(1.4);
+        }
+      }
+
+      .secondary-button,
+      .ghost-button,
+      .icon-button,
+      .danger-button,
+      .primary-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        font-weight: 720;
+      }
+
+      .secondary-button {
+        height: 40px;
+        gap: 8px;
+        padding: 0 15px;
+        border: 1px solid #cfd8e6;
+        border-radius: 10px;
+        color: #34415a;
+        background: #fff;
+        font-size: 0.8rem;
+      }
+
+      .secondary-button:hover {
+        border-color: #9eabc0;
+        background: #f9faff;
+      }
+
+      .secondary-button svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 15px;
+        margin-bottom: 18px;
+      }
+
+      .stat-card {
+        display: flex;
+        align-items: center;
+        min-height: 96px;
+        padding: 18px 20px;
+        border: 1px solid rgba(220, 227, 238, 0.9);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 7px 24px rgba(37, 57, 95, 0.05);
+      }
+
+      .stat-icon {
+        display: grid;
+        flex: 0 0 auto;
+        width: 42px;
+        height: 42px;
+        margin-right: 13px;
+        place-items: center;
+        border-radius: 12px;
+        color: var(--primary);
+        background: var(--primary-soft);
+      }
+
+      .stat-icon.green {
+        color: var(--success);
+        background: var(--success-soft);
+      }
+
+      .stat-icon.amber {
+        color: #a16700;
+        background: var(--warning-soft);
+      }
+
+      .stat-icon svg {
+        width: 21px;
+        height: 21px;
+      }
+
+      .stat-label {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 680;
+      }
+
+      .stat-value {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 780;
+        letter-spacing: -0.03em;
+      }
+
+      .stat-value-line {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .sales-eye {
+        flex: 0 0 auto;
+        width: 26px;
+        height: 26px;
+      }
+
+      .sales-eye svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .generator-card,
+      .table-card {
+        border: 1px solid rgba(220, 227, 238, 0.95);
+        border-radius: 16px;
+        background: var(--card);
+        box-shadow: var(--shadow);
+      }
+
+      .generator-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.65fr);
+        overflow: hidden;
+        margin-bottom: 18px;
+      }
+
+      .generator-form {
+        padding: 28px 30px 30px;
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 23px;
+      }
+
+      .eyebrow {
+        margin: 0 0 5px;
+        color: var(--primary);
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 1.12rem;
+        letter-spacing: -0.025em;
+      }
+
+      .section-note {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 17px;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      .field label,
+      .field-label {
+        display: block;
+        margin-bottom: 7px;
+        color: #34415a;
+        font-size: 0.77rem;
+        font-weight: 720;
+      }
+
+      .input-action {
+        display: flex;
+        gap: 8px;
+      }
+
+      input[type="text"],
+      input[type="password"],
+      input[type="number"],
+      select {
+        width: 100%;
+        height: 44px;
+        border: 1px solid #ccd5e3;
+        border-radius: 9px;
+        outline: none;
+        color: var(--ink);
+        background: var(--field);
+      }
+
+      input[type="text"],
+      input[type="password"],
+      input[type="number"] {
+        padding: 0 13px;
+      }
+
+      select {
+        padding: 0 36px 0 13px;
+      }
+
+      input:hover,
+      select:hover {
+        border-color: #9eabc0;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: var(--primary);
+        background: #fff;
+        box-shadow: 0 0 0 4px var(--focus);
+      }
+
+      .auto-button {
+        flex: 0 0 auto;
+        height: 44px;
+        padding: 0 13px;
+        border: 1px solid #c9d5ee;
+        border-radius: 9px;
+        color: var(--primary);
+        background: #f2f6ff;
+        font-size: 0.73rem;
+        font-weight: 750;
+      }
+
+      .auto-button:hover {
+        border-color: #9ab0de;
+        background: #e8efff;
+      }
+
+      .duration-pills,
+      .modal-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .duration-pill {
+        height: 38px;
+        padding: 0 16px;
+        border: 1px solid #d4dce8;
+        border-radius: 999px;
+        color: #59657a;
+        background: #fff;
+        font-size: 0.75rem;
+        font-weight: 720;
+      }
+
+      .duration-pill:hover {
+        border-color: #a7b7d4;
+        color: var(--primary);
+      }
+
+      .duration-pill.active {
+        border-color: var(--primary);
+        color: #fff;
+        background: var(--primary);
+        box-shadow: 0 5px 12px rgba(40, 88, 214, 0.2);
+      }
+
+      .custom-time {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .custom-time.visible {
+        display: flex;
+      }
+
+      .custom-time input {
+        max-width: 110px;
+      }
+
+      .custom-time span {
+        color: var(--muted);
+        font-size: 0.76rem;
+      }
+
+      .primary-button {
+        min-height: 46px;
+        padding: 0 20px;
+        border-radius: 10px;
+        color: #fff;
+        background: var(--primary);
+        box-shadow: 0 8px 18px rgba(40, 88, 214, 0.2);
+      }
+
+      .primary-button:hover {
+        background: var(--primary-dark);
+        box-shadow: 0 10px 22px rgba(40, 88, 214, 0.27);
+        transform: translateY(-1px);
+      }
+
+      .primary-button svg {
+        width: 18px;
+        height: 18px;
+        margin-right: 9px;
+      }
+
+      .generate-button {
+        width: 100%;
+        margin-top: 3px;
+      }
+
+      .qr-preview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        border-left: 1px solid var(--line);
+        background:
+          radial-gradient(circle at 75% 20%, rgba(73, 116, 228, 0.08), transparent 34%),
+          #f8faff;
+      }
+
+      .qr-inner {
+        width: 100%;
+        max-width: 280px;
+        text-align: center;
+      }
+
+      .preview-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 14px;
+        color: var(--success);
+        font-size: 0.69rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .preview-label::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #13a98f;
+        content: "";
+      }
+
+      .qr-box {
+        display: grid;
+        width: 156px;
+        height: 156px;
+        margin: 0 auto 16px;
+        padding: 11px;
+        place-items: center;
+        border: 1px solid #d5deeb;
+        border-radius: 13px;
+        background: #fff;
+        box-shadow: 0 10px 24px rgba(44, 67, 112, 0.1);
+      }
+
+      #qr-canvas {
+        width: 132px;
+        height: 132px;
+        image-rendering: pixelated;
+      }
+
+      .preview-code {
+        margin: 0;
+        font-size: 0.98rem;
+        font-weight: 780;
+        overflow-wrap: anywhere;
+      }
+
+      .preview-meta {
+        margin: 6px 0 17px;
+        color: var(--muted);
+        font-size: 0.73rem;
+        line-height: 1.55;
+      }
+
+      .preview-meta span {
+        color: #3a4760;
+        font-weight: 700;
+      }
+
+      .qr-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .qr-action-button {
+        width: 100%;
+        padding-inline: 10px;
+      }
+
+      .qr-action-button svg {
+        flex: 0 0 auto;
+      }
+
+      .large-qr-modal {
+        width: min(100%, 590px);
+      }
+
+      .large-qr-content {
+        padding: 28px 28px 30px;
+        background:
+          radial-gradient(circle at 80% 12%, rgba(73, 116, 228, 0.08), transparent 35%),
+          #f8faff;
+        text-align: center;
+      }
+
+      .large-qr-box {
+        display: grid;
+        width: min(68vw, 360px);
+        aspect-ratio: 1;
+        margin: 2px auto 20px;
+        padding: 18px;
+        place-items: center;
+        border: 1px solid #d5deeb;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 18px 42px rgba(44, 67, 112, 0.14);
+      }
+
+      #large-qr-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+      }
+
+      .large-preview-code {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+      }
+
+      .large-preview-meta {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+
+      .large-preview-meta span {
+        color: #3a4760;
+        font-weight: 700;
+      }
+
+      .table-card {
+        overflow: hidden;
+      }
+
+      .table-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 24px 26px 19px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .table-tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .danger-button {
+        display: none;
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid #f0c9cf;
+        border-radius: 8px;
+        color: var(--danger);
+        background: var(--danger-soft);
+        font-size: 0.72rem;
+      }
+
+      .danger-button.visible {
+        display: inline-flex;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        min-width: 1120px;
+        border-collapse: collapse;
+        text-align: left;
+      }
+
+      th {
+        padding: 12px 15px;
+        color: #7a8496;
+        background: #fafbfc;
+        font-size: 0.67rem;
+        font-weight: 780;
+        letter-spacing: 0.055em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      th:first-child,
+      td:first-child {
+        width: 50px;
+        padding-left: 26px;
+      }
+
+      td {
+        padding: 15px;
+        border-top: 1px solid #edf0f5;
+        color: #364259;
+        font-size: 0.79rem;
+        vertical-align: middle;
+      }
+
+      tbody tr:hover {
+        background: #fbfcff;
+      }
+
+      input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: var(--primary);
+        cursor: pointer;
+      }
+
+      .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--ink);
+        font-weight: 720;
+      }
+
+      .avatar {
+        display: grid;
+        flex: 0 0 auto;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 9px;
+        color: var(--primary);
+        background: var(--primary-soft);
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .password-cell {
+        display: flex;
+        align-items: center;
+        min-width: 120px;
+        gap: 7px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .eye-button {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        place-items: center;
+        border: 0;
+        border-radius: 7px;
+        color: #7b879b;
+        background: transparent;
+      }
+
+      .eye-button:hover {
+        color: var(--primary);
+        background: var(--primary-soft);
+      }
+
+      .eye-button svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .time-cell strong {
+        display: block;
+        margin-bottom: 3px;
+        color: #354159;
+        font-size: 0.76rem;
+      }
+
+      .time-cell span {
+        color: var(--soft);
+        font-size: 0.68rem;
+      }
+
+      .stamp-cell {
+        color: #5c6980;
+        font-size: 0.72rem;
+        white-space: nowrap;
+      }
+
+      .stamp-cell .stamp-sub {
+        display: block;
+        margin-top: 3px;
+        color: var(--soft);
+        font-size: 0.64rem;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 0.67rem;
+        font-weight: 780;
+      }
+
+      .status-pill::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        content: "";
+      }
+
+      .status-pill.active {
+        color: var(--success);
+        background: var(--success-soft);
+      }
+
+      .status-pill.active::before {
+        background: #0da58c;
+      }
+
+      .status-pill.unused {
+        color: var(--warning);
+        background: var(--warning-soft);
+      }
+
+      .status-pill.unused::before {
+        background: #d39518;
+      }
+
+      .status-pill.expired {
+        color: var(--danger);
+        background: var(--danger-soft);
+      }
+
+      .status-pill.expired::before {
+        background: #db6a7a;
+      }
+
+      .row-actions {
+        display: flex;
+        gap: 7px;
+      }
+
+      .row-qr-button {
+        gap: 5px;
+      }
+
+      .row-qr-button svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .ghost-button,
+      .icon-button {
+        height: 32px;
+        padding: 0 11px;
+        border: 1px solid #d7deea;
+        border-radius: 8px;
+        color: #526077;
+        background: #fff;
+        font-size: 0.69rem;
+      }
+
+      .ghost-button:hover {
+        border-color: #9eb1d8;
+        color: var(--primary);
+        background: #f5f8ff;
+      }
+
+      .icon-button {
+        width: 32px;
+        padding: 0;
+        color: var(--danger);
+      }
+
+      .icon-button:hover {
+        border-color: #e5adb6;
+        background: var(--danger-soft);
+      }
+
+      .icon-button svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .empty-state {
+        padding: 42px 20px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        z-index: 20;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(18, 29, 52, 0.52);
+        backdrop-filter: blur(4px);
+      }
+
+      .modal-backdrop.open {
+        display: flex;
+      }
+
+      .modal {
+        width: min(100%, 470px);
+        overflow: hidden;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 28px 80px rgba(13, 26, 54, 0.28);
+        animation: modal-in 180ms ease-out;
+      }
+
+      @keyframes modal-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.98);
+        }
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 21px 24px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .modal-header h2 {
+        font-size: 1.05rem;
+      }
+
+      .close-button {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        place-items: center;
+        border: 0;
+        border-radius: 9px;
+        color: #667085;
+        background: #f2f4f7;
+        font-size: 1.2rem;
+      }
+
+      .close-button:hover {
+        color: var(--ink);
+        background: #e8ebf0;
+      }
+
+      .modal-body {
+        display: grid;
+        gap: 16px;
+        padding: 23px 24px 10px;
+      }
+
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 9px;
+        padding: 18px 24px 24px;
+      }
+
+      .guest-preview {
+        max-width: 390px;
+        padding: 0;
+      }
+
+      .guest-screen {
+        padding: 32px 28px;
+        background: linear-gradient(145deg, #f4f7ff, #edf9f6);
+        text-align: center;
+      }
+
+      .guest-wifi {
+        display: grid;
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 12px;
+        place-items: center;
+        border-radius: 14px;
+        color: #fff;
+        background: var(--primary);
+      }
+
+      .guest-screen h3 {
+        margin: 0;
+        font-size: 1.18rem;
+      }
+
+      .guest-screen p {
+        margin: 7px 0 20px;
+        color: var(--muted);
+        font-size: 0.76rem;
+        line-height: 1.5;
+      }
+
+      .guest-screen input {
+        margin-bottom: 9px;
+        background: #fff;
+      }
+
+      .guest-screen .primary-button {
+        width: 100%;
+      }
+
+      .toast {
+        position: fixed;
+        z-index: 30;
+        right: 22px;
+        bottom: 22px;
+        display: flex;
+        align-items: center;
+        max-width: calc(100% - 44px);
+        gap: 10px;
+        padding: 13px 16px;
+        border: 1px solid #c9e6df;
+        border-radius: 11px;
+        color: #176c60;
+        background: #f5fffc;
+        box-shadow: 0 14px 34px rgba(28, 52, 84, 0.16);
+        font-size: 0.78rem;
+        font-weight: 680;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(12px);
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 900px) {
+        .generator-card {
+          grid-template-columns: 1fr;
+        }
+
+        .qr-preview {
+          border-top: 1px solid var(--line);
+          border-left: 0;
+        }
+
+        .qr-inner {
+          max-width: 330px;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .app-shell {
+          width: min(100% - 24px, 1240px);
+          padding-top: 18px;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .top-actions {
+          width: 100%;
+        }
+
+        .live-badge,
+        .top-actions .secondary-button {
+          flex: 1;
+          justify-content: center;
+        }
+
+        .stats-grid {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .stat-card {
+          min-height: 78px;
+        }
+
+        .generator-form {
+          padding: 24px 20px 26px;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .field.full {
+          grid-column: auto;
+        }
+
+        .duration-pill {
+          flex: 1 1 42%;
+        }
+
+        .qr-preview {
+          padding: 25px 20px;
+        }
+
+        .table-header {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 21px 20px 16px;
+        }
+
+        .table-tools {
+          width: 100%;
+        }
+
+        .danger-button.visible {
+          flex: 1;
+        }
+
+        .modal-footer .secondary-button,
+        .modal-footer .primary-button {
+          flex: 1;
+        }
+      }
+
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+
+        .qr-preview,
+        .qr-preview * {
+          visibility: visible;
+        }
+
+        .qr-preview {
+          position: absolute;
+          inset: 0;
+          border: 0;
+          background: #fff;
+        }
+
+        .qr-actions {
+          display: none;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M4.5 12.7a17.2 17.2 0 0 1 23 0M8.5 17.1a11.4 11.4 0 0 1 15 0M12.7 21.4a5.4 5.4 0 0 1 6.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <circle cx="16" cy="25.5" r="1.65" fill="currentColor" />
+            </svg>
+          </div>
+          <div>
+            <h1>Wi-Fi Admin Control Panel</h1>
+            <p>Guest network access and voucher management</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <div class="live-badge" aria-live="polite">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span><strong id="header-active">0</strong> active users</span>
+          </div>
+          <button class="secondary-button" id="preview-guest" type="button">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" />
+              <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+            Preview Guest Portal
+          </button>
+        </div>
+      </header>
+
+      <section class="stats-grid" aria-label="Network overview">
+        <article class="stat-card">
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M16 19v-1.5A3.5 3.5 0 0 0 12.5 14h-6A3.5 3.5 0 0 0 3 17.5V19M9.5 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM17 8v6m-3-3h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </span>
+          <div><span class="stat-label">Total vouchers</span><strong class="stat-value" id="total-vouchers">0</strong></div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" stroke="currentColor" stroke-width="1.8" />
+              <path d="m8 12 2.5 2.5L16.5 8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <div><span class="stat-label">Online now</span><strong class="stat-value" id="active-users">0</strong></div>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon amber">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2v20M16.5 6H9.75a3.25 3.25 0 0 0 0 6.5h4.5a3.25 3.25 0 0 1 0 6.5H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </span>
+          <div>
+            <span class="stat-label">Total sales</span>
+            <div class="stat-value-line">
+              <strong class="stat-value" id="total-sales">₱0</strong>
+              <button class="eye-button sales-eye" id="toggle-sales" type="button" aria-label="Hide total sales" aria-pressed="true">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" />
+                  <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="generator-card" aria-labelledby="generator-title">
+        <div class="generator-form">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Voucher generator</p>
+              <h2 id="generator-title">Create guest access</h2>
+              <p class="section-note">Generate secure credentials and a unique QR access card.</p>
+            </div>
+          </div>
+          <form id="voucher-form" class="form-grid">
+            <div class="field">
+              <label for="voucher-code">Voucher Code</label>
+              <div class="input-action">
+                <input id="voucher-code" type="text" placeholder="e.g. GUEST-4821" required />
+                <button class="auto-button" id="auto-generate" type="button">Auto-Generate</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="voucher-password">Password</label>
+              <input id="voucher-password" type="text" placeholder="Enter a secure password" required />
+            </div>
+            <div class="field full">
+              <span class="field-label">Access duration</span>
+              <div class="duration-pills" id="duration-pills">
+                <button class="duration-pill active" type="button" data-hours="1" data-label="1 Hour">1 Hour · ₱5</button>
+                <button class="duration-pill" type="button" data-hours="24" data-label="1 Day">1 Day · ₱20</button>
+                <button class="duration-pill" type="button" data-hours="48" data-label="2 Days">2 Days · ₱35</button>
+                <button class="duration-pill" type="button" data-hours="custom" data-label="Custom">Custom</button>
+              </div>
+              <div class="custom-time" id="custom-time">
+                <input id="custom-hours" type="number" min="1" max="720" value="3" aria-label="Custom duration in hours" />
+                <span>hours of access</span>
+              </div>
+            </div>
+            <div class="field full">
+              <button class="primary-button generate-button" type="submit">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4 4h5v5H4V4Zm11 0h5v5h-5V4ZM4 15h5v5H4v-5Zm11 0h2v2h-2v-2Zm3 0h2v5h-2v-5Zm-3 3h2v2h-2v-2Z" stroke="currentColor" stroke-width="1.8" />
+                </svg>
+                Generate QR &amp; Add User
+              </button>
+            </div>
+          </form>
+        </div>
+        <aside class="qr-preview" aria-label="Generated QR voucher preview">
+          <div class="qr-inner">
+            <div class="preview-label">QR preview</div>
+            <div class="qr-box"><canvas id="qr-canvas" width="264" height="264" aria-label="Voucher QR pattern"></canvas></div>
+            <p class="preview-code" id="preview-code">Ready to generate</p>
+            <p class="preview-meta" id="preview-meta">Create a voucher to update this access card.<br /><span>Guest Wi-Fi Access</span></p>
+            <div class="qr-actions">
+              <button class="secondary-button qr-action-button" id="large-qr-preview" type="button">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M8 3H3v5m13-5h5v5M8 21H3v-5m18 0v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Enlarge
+              </button>
+              <button class="secondary-button qr-action-button" id="print-qr" type="button">Print QR</button>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="table-card" aria-labelledby="users-title">
+        <div class="table-header">
+          <div>
+            <p class="eyebrow">Access management</p>
+            <h2 id="users-title">Active users &amp; vouchers</h2>
+            <p class="section-note">Manage credentials, connection status, and assigned time.</p>
+          </div>
+          <div class="table-tools">
+            <button class="danger-button" id="remove-selected" type="button">Remove selected</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input id="select-all" type="checkbox" aria-label="Select all vouchers" /></th>
+                <th>Voucher Code</th>
+                <th>Password</th>
+                <th>Assigned / Remaining</th>
+                <th>Created</th>
+                <th>Ended</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <div class="modal-backdrop" id="edit-backdrop" role="presentation">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+        <header class="modal-header">
+          <div><p class="eyebrow">Voucher settings</p><h2 id="edit-title">Edit user access</h2></div>
+          <button class="close-button" type="button" data-close="edit-backdrop" aria-label="Close edit dialog">×</button>
+        </header>
+        <form id="edit-form">
+          <div class="modal-body">
+            <div class="field"><label for="edit-code">Voucher Code</label><input id="edit-code" type="text" required /></div>
+            <div class="field"><label for="edit-password">Password</label><input id="edit-password" type="text" required /></div>
+            <div class="field">
+              <span class="field-label">Access duration</span>
+              <div class="modal-pills" id="edit-duration-pills">
+                <button class="duration-pill" type="button" data-hours="1">1 Hour</button>
+                <button class="duration-pill" type="button" data-hours="24">1 Day</button>
+                <button class="duration-pill" type="button" data-hours="48">2 Days</button>
+              </div>
+            </div>
+          </div>
+          <footer class="modal-footer">
+            <button class="secondary-button" type="button" data-close="edit-backdrop">Cancel</button>
+            <button class="primary-button" type="submit">Save Changes</button>
+          </footer>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="guest-backdrop" role="presentation">
+      <section class="modal guest-preview" role="dialog" aria-modal="true" aria-labelledby="guest-title">
+        <header class="modal-header">
+          <div><p class="eyebrow">Live preview</p><h2 id="guest-title">Guest login portal</h2></div>
+          <button class="close-button" type="button" data-close="guest-backdrop" aria-label="Close guest preview">×</button>
+        </header>
+        <div class="guest-screen">
+          <div class="guest-wifi" aria-hidden="true">
+            <svg width="25" height="25" viewBox="0 0 32 32" fill="none">
+              <path d="M4.5 12.7a17.2 17.2 0 0 1 23 0M8.5 17.1a11.4 11.4 0 0 1 15 0M12.7 21.4a5.4 5.4 0 0 1 6.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <circle cx="16" cy="25.5" r="1.65" fill="currentColor" />
+            </svg>
+          </div>
+          <h3>Guest Wi-Fi Access</h3>
+          <p>Enter your voucher credentials to connect securely.</p>
+          <input type="text" placeholder="Voucher Code" aria-label="Preview username" />
+          <input type="password" placeholder="Password" aria-label="Preview password" />
+          <button class="primary-button" type="button">Connect to Wi-Fi</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="qr-backdrop" role="presentation">
+      <section class="modal large-qr-modal" role="dialog" aria-modal="true" aria-labelledby="large-qr-title">
+        <header class="modal-header">
+          <div><p class="eyebrow">Full-size access card</p><h2 id="large-qr-title">QR code preview</h2></div>
+          <button class="close-button" type="button" data-close="qr-backdrop" aria-label="Close large QR preview">×</button>
+        </header>
+        <div class="large-qr-content">
+          <div class="large-qr-box">
+            <canvas id="large-qr-canvas" width="720" height="720" aria-label="Large voucher QR pattern"></canvas>
+          </div>
+          <p class="large-preview-code" id="large-preview-code">Ready to generate</p>
+          <p class="large-preview-meta" id="large-preview-meta">Create a voucher to update this access card.<br /><span>Guest Wi-Fi Access</span></p>
+        </div>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const HOUR = 60 * 60 * 1000;
+      const durationNames = { 1: "1 Hour", 24: "1 Day", 48: "2 Days" };
+      const prices = { 1: 5, 24: 20, 48: 35 };
+      let totalSales = 80;
+      let salesVisible = true;
+      let selectedDuration = 1;
+      let editDuration = 1;
+      let editingId = null;
+      let toastTimer;
+
+      let users = [
+        { id: 1, code: "LOBBY-8421", password: "stay2025", hours: 1, status: "active", createdAt: Date.now() - 18 * 60 * 1000, expiresAt: Date.now() + 42 * 60 * 1000, reveal: false },
+        { id: 2, code: "CAFE-GUEST-17", password: "brew&browse", hours: 24, status: "active", createdAt: Date.now() - 5.6 * HOUR, expiresAt: Date.now() + 18.4 * HOUR, reveal: false },
+        { id: 3, code: "ROOM-305", password: "welcome305", hours: 48, status: "unused", createdAt: Date.now() - 3 * HOUR, expiresAt: null, reveal: false },
+        { id: 4, code: "EVENT-9026", password: "connectNow", hours: 24, status: "active", createdAt: Date.now() - 17.8 * HOUR, expiresAt: Date.now() + 6.2 * HOUR, reveal: false }
+      ];
+
+      const elements = {
+        body: document.getElementById("users-body"),
+        form: document.getElementById("voucher-form"),
+        code: document.getElementById("voucher-code"),
+        password: document.getElementById("voucher-password"),
+        customTime: document.getElementById("custom-time"),
+        customHours: document.getElementById("custom-hours"),
+        selectAll: document.getElementById("select-all"),
+        removeSelected: document.getElementById("remove-selected"),
+        editBackdrop: document.getElementById("edit-backdrop"),
+        editForm: document.getElementById("edit-form"),
+        editCode: document.getElementById("edit-code"),
+        editPassword: document.getElementById("edit-password"),
+        previewCode: document.getElementById("preview-code"),
+        previewMeta: document.getElementById("preview-meta"),
+        canvas: document.getElementById("qr-canvas"),
+        largeCanvas: document.getElementById("large-qr-canvas"),
+        largeQrTitle: document.getElementById("large-qr-title"),
+        largePreviewCode: document.getElementById("large-preview-code"),
+        largePreviewMeta: document.getElementById("large-preview-meta"),
+        toggleSales: document.getElementById("toggle-sales"),
+        toast: document.getElementById("toast")
+      };
+
+      function escapeHTML(value) {
+        return String(value).replace(/[&<>"']/g, (character) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+        })[character]);
+      }
+
+      function initials(code) {
+        return code.replace(/[^a-z0-9]/gi, "").slice(0, 2) || "GU";
+      }
+
+      function durationLabel(hours) {
+        return durationNames[hours] || `${hours} Hours`;
+      }
+
+      const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
+
+      function formatDateTime(timestamp) {
+        return timestamp ? dateTimeFormatter.format(new Date(timestamp)) : "—";
+      }
+
+      function padTime(value) {
+        return String(value).padStart(2, "0");
+      }
+
+      function remainingExact(user) {
+        if (!user.expiresAt) return "Timer starts on first use";
+        const milliseconds = user.expiresAt - Date.now();
+        if (milliseconds <= 0) return "Expired";
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const clock = `${padTime(hours)}:${padTime(minutes)}:${padTime(seconds)}`;
+        return days ? `${days}d ${clock} remaining` : `${clock} remaining`;
+      }
+
+      function statusLabel(status) {
+        if (status === "active") return "Active";
+        if (status === "expired") return "Expired";
+        return "Unused";
+      }
+
+      function qrPayload(user) {
+        return `WIFI:T:nopass;S:Guest Wi-Fi;U:${user.code};P:${user.password};D:${user.hours}h;;`;
+      }
+
+      function eyeIcon() {
+        return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8"/></svg>';
+      }
+
+      function eyeOffIcon() {
+        return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M6.5 6.9A17.4 17.4 0 0 0 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.3 3.3-.7M9.9 5.2A10.3 10.3 0 0 1 12 5c6 0 9.5 6 9.5 6a17.7 17.7 0 0 1-3.4 4.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      }
+
+      function trashIcon() {
+        return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      }
+
+      function renderTable() {
+        if (!users.length) {
+          elements.body.innerHTML = '<tr><td colspan="8" class="empty-state">No vouchers yet. Generate one above to get started.</td></tr>';
+        } else {
+          elements.body.innerHTML = users.map((user) => `
+            <tr>
+              <td><input class="row-select" type="checkbox" data-id="${user.id}" aria-label="Select ${escapeHTML(user.code)}" /></td>
+              <td><div class="user-cell"><span>${escapeHTML(user.code)}</span></div></td>
+              <td><div class="password-cell"><span>${user.reveal ? escapeHTML(user.password) : "••••••••"}</span><button class="eye-button" type="button" data-action="reveal" data-id="${user.id}" aria-label="${user.reveal ? "Hide" : "Show"} password">${eyeIcon()}</button></div></td>
+              <td><div class="time-cell"><strong>${escapeHTML(durationLabel(user.hours))}</strong><span class="remaining-live" data-id="${user.id}">${escapeHTML(remainingExact(user))}</span></div></td>
+              <td class="stamp-cell">${escapeHTML(formatDateTime(user.createdAt))}</td>
+              <td class="stamp-cell">${escapeHTML(formatDateTime(user.expiresAt))}${user.status === "active" && user.expiresAt ? '<span class="stamp-sub">scheduled end</span>' : ""}</td>
+              <td><span class="status-pill ${user.status}">${statusLabel(user.status)}</span></td>
+              <td><div class="row-actions"><button class="ghost-button" type="button" data-action="edit" data-id="${user.id}">Edit</button><button class="ghost-button row-qr-button" type="button" data-action="qr" data-id="${user.id}" aria-label="Show QR for ${escapeHTML(user.code)}">${eyeIcon()}QR</button><button class="icon-button" type="button" data-action="remove" data-id="${user.id}" aria-label="Remove ${escapeHTML(user.code)}">${trashIcon()}</button></div></td>
+            </tr>
+          `).join("");
+        }
+        updateSummary();
+        syncSelectionTools();
+      }
+
+      function updateSummary() {
+        const active = users.filter((user) => user.status === "active" && (!user.expiresAt || user.expiresAt > Date.now())).length;
+        document.getElementById("total-vouchers").textContent = users.length;
+        document.getElementById("active-users").textContent = active;
+        document.getElementById("header-active").textContent = active;
+        updateSales();
+      }
+
+      function updateSales() {
+        document.getElementById("total-sales").textContent = salesVisible
+          ? `₱${totalSales.toLocaleString()}`
+          : "₱••••";
+        elements.toggleSales.innerHTML = salesVisible ? eyeIcon() : eyeOffIcon();
+        elements.toggleSales.setAttribute("aria-label", salesVisible ? "Hide total sales" : "Show total sales");
+        elements.toggleSales.setAttribute("aria-pressed", String(salesVisible));
+      }
+
+      function randomCode() {
+        const number = Math.floor(1000 + Math.random() * 9000);
+        elements.code.value = `GUEST-${number}`;
+        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+        elements.password.value = Array.from({ length: 9 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+      }
+
+      function hashString(text) {
+        let hash = 2166136261;
+        for (let i = 0; i < text.length; i += 1) {
+          hash ^= text.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return hash >>> 0;
+      }
+
+      function drawQrPattern(value, canvas = elements.canvas) {
+        const context = canvas.getContext("2d");
+        const size = 29;
+        const cell = canvas.width / size;
+        const reserved = Array.from({ length: size }, () => Array(size).fill(false));
+        let seed = hashString(value || "wifi-admin-ready");
+
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        function random() {
+          seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+          return seed / 4294967296;
+        }
+
+        function finder(startX, startY) {
+          for (let y = -1; y <= 7; y += 1) {
+            for (let x = -1; x <= 7; x += 1) {
+              const px = startX + x;
+              const py = startY + y;
+              if (px >= 0 && py >= 0 && px < size && py < size) reserved[py][px] = true;
+            }
+          }
+          context.fillStyle = "#17223b";
+          context.fillRect(startX * cell, startY * cell, 7 * cell, 7 * cell);
+          context.fillStyle = "#ffffff";
+          context.fillRect((startX + 1) * cell, (startY + 1) * cell, 5 * cell, 5 * cell);
+          context.fillStyle = "#17223b";
+          context.fillRect((startX + 2) * cell, (startY + 2) * cell, 3 * cell, 3 * cell);
+        }
+
+        finder(1, 1);
+        finder(size - 8, 1);
+        finder(1, size - 8);
+        context.fillStyle = "#17223b";
+        for (let y = 0; y < size; y += 1) {
+          for (let x = 0; x < size; x += 1) {
+            if (!reserved[y][x] && random() > 0.52) {
+              context.fillRect(Math.floor(x * cell), Math.floor(y * cell), Math.ceil(cell), Math.ceil(cell));
+            }
+          }
+        }
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        elements.toast.textContent = message;
+        elements.toast.classList.add("show");
+        toastTimer = setTimeout(() => elements.toast.classList.remove("show"), 2800);
+      }
+
+      function setDuration(container, hours) {
+        container.querySelectorAll(".duration-pill").forEach((button) => {
+          button.classList.toggle("active", String(button.dataset.hours) === String(hours));
+        });
+      }
+
+      function openModal(element) {
+        element.classList.add("open");
+        document.body.style.overflow = "hidden";
+        setTimeout(() => element.querySelector("input, button")?.focus(), 0);
+      }
+
+      function closeModal(element) {
+        element.classList.remove("open");
+        document.body.style.overflow = "";
+      }
+
+      function syncLargeQrPreview() {
+        const context = elements.largeCanvas.getContext("2d");
+        context.imageSmoothingEnabled = false;
+        context.clearRect(0, 0, elements.largeCanvas.width, elements.largeCanvas.height);
+        context.drawImage(elements.canvas, 0, 0, elements.largeCanvas.width, elements.largeCanvas.height);
+        elements.largeQrTitle.textContent = "QR code preview";
+        elements.largePreviewCode.textContent = elements.previewCode.textContent;
+        elements.largePreviewMeta.innerHTML = elements.previewMeta.innerHTML;
+      }
+
+      document.getElementById("auto-generate").addEventListener("click", randomCode);
+
+      document.getElementById("duration-pills").addEventListener("click", (event) => {
+        const button = event.target.closest(".duration-pill");
+        if (!button) return;
+        selectedDuration = button.dataset.hours === "custom" ? "custom" : Number(button.dataset.hours);
+        setDuration(document.getElementById("duration-pills"), selectedDuration);
+        elements.customTime.classList.toggle("visible", selectedDuration === "custom");
+      });
+
+      elements.form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const hours = selectedDuration === "custom" ? Number(elements.customHours.value) : selectedDuration;
+        if (!hours || hours < 1) {
+          elements.customHours.focus();
+          return;
+        }
+        const code = elements.code.value.trim();
+        if (users.some((user) => user.code.toLowerCase() === code.toLowerCase())) {
+          showToast("That voucher code already exists. Please use another.");
+          elements.code.focus();
+          return;
+        }
+        const user = {
+          id: Date.now(),
+          code,
+          password: elements.password.value,
+          hours,
+          status: "unused",
+          createdAt: Date.now(),
+          expiresAt: null,
+          reveal: false
+        };
+        users.unshift(user);
+        totalSales += prices[hours] || 0;
+        elements.previewCode.textContent = code;
+        elements.previewMeta.innerHTML = `Password: <span>${escapeHTML(user.password)}</span> · ${escapeHTML(durationLabel(hours))}<br><span>Guest Wi-Fi Access</span>`;
+        drawQrPattern(qrPayload(user));
+        renderTable();
+        elements.form.reset();
+        selectedDuration = 1;
+        setDuration(document.getElementById("duration-pills"), 1);
+        elements.customTime.classList.remove("visible");
+        showToast(`${code} was generated and added successfully.`);
+      });
+
+      elements.body.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+        const id = Number(button.dataset.id);
+        const user = users.find((item) => item.id === id);
+        if (!user) return;
+        if (button.dataset.action === "reveal") {
+          user.reveal = !user.reveal;
+          renderTable();
+        }
+        if (button.dataset.action === "edit") {
+          editingId = id;
+          editDuration = [1, 24, 48].includes(user.hours) ? user.hours : 1;
+          elements.editCode.value = user.code;
+          elements.editPassword.value = user.password;
+          setDuration(document.getElementById("edit-duration-pills"), editDuration);
+          openModal(elements.editBackdrop);
+        }
+        if (button.dataset.action === "qr") {
+          drawQrPattern(qrPayload(user), elements.largeCanvas);
+          elements.largeQrTitle.textContent = `QR code · ${user.code}`;
+          elements.largePreviewCode.textContent = user.code;
+          elements.largePreviewMeta.innerHTML = `Password: <span>${escapeHTML(user.password)}</span> · ${escapeHTML(durationLabel(user.hours))}<br><span>${escapeHTML(remainingExact(user))}</span>`;
+          openModal(document.getElementById("qr-backdrop"));
+        }
+        if (button.dataset.action === "remove" && confirm(`Remove ${user.code} and disconnect this voucher?`)) {
+          users = users.filter((item) => item.id !== id);
+          renderTable();
+          showToast(`${user.code} was removed.`);
+        }
+      });
+
+      document.getElementById("edit-duration-pills").addEventListener("click", (event) => {
+        const button = event.target.closest(".duration-pill");
+        if (!button) return;
+        editDuration = Number(button.dataset.hours);
+        setDuration(document.getElementById("edit-duration-pills"), editDuration);
+      });
+
+      elements.editForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const user = users.find((item) => item.id === editingId);
+        if (!user) return;
+        user.code = elements.editCode.value.trim();
+        user.password = elements.editPassword.value;
+        user.hours = editDuration;
+        if (user.status === "active") user.expiresAt = Date.now() + editDuration * HOUR;
+        renderTable();
+        closeModal(elements.editBackdrop);
+        showToast(`${user.code} was updated.`);
+      });
+
+      function selectedIds() {
+        return [...document.querySelectorAll(".row-select:checked")].map((checkbox) => Number(checkbox.dataset.id));
+      }
+
+      function syncSelectionTools() {
+        const selected = selectedIds();
+        elements.removeSelected.classList.toggle("visible", selected.length > 0);
+        elements.removeSelected.textContent = `Remove selected${selected.length ? ` (${selected.length})` : ""}`;
+        elements.selectAll.checked = users.length > 0 && selected.length === users.length;
+        elements.selectAll.indeterminate = selected.length > 0 && selected.length < users.length;
+      }
+
+      elements.body.addEventListener("change", (event) => {
+        if (event.target.classList.contains("row-select")) syncSelectionTools();
+      });
+
+      elements.selectAll.addEventListener("change", () => {
+        document.querySelectorAll(".row-select").forEach((checkbox) => {
+          checkbox.checked = elements.selectAll.checked;
+        });
+        syncSelectionTools();
+      });
+
+      elements.removeSelected.addEventListener("click", () => {
+        const ids = selectedIds();
+        if (ids.length && confirm(`Remove ${ids.length} selected voucher${ids.length > 1 ? "s" : ""}?`)) {
+          users = users.filter((user) => !ids.includes(user.id));
+          renderTable();
+          showToast(`${ids.length} voucher${ids.length > 1 ? "s were" : " was"} removed.`);
+        }
+      });
+
+      document.getElementById("preview-guest").addEventListener("click", () => openModal(document.getElementById("guest-backdrop")));
+      elements.toggleSales.addEventListener("click", () => {
+        salesVisible = !salesVisible;
+        updateSales();
+      });
+      document.getElementById("large-qr-preview").addEventListener("click", () => {
+        syncLargeQrPreview();
+        openModal(document.getElementById("qr-backdrop"));
+      });
+      document.getElementById("print-qr").addEventListener("click", () => window.print());
+
+      document.querySelectorAll("[data-close]").forEach((button) => {
+        button.addEventListener("click", () => closeModal(document.getElementById(button.dataset.close)));
+      });
+
+      document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
+        backdrop.addEventListener("click", (event) => {
+          if (event.target === backdrop) closeModal(backdrop);
+        });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          document.querySelectorAll(".modal-backdrop.open").forEach(closeModal);
+        }
+      });
+
+      randomCode();
+      drawQrPattern("wifi-admin-ready");
+      renderTable();
+
+      function tickTable() {
+        let structuralChange = false;
+        users.forEach((user) => {
+          if (user.status === "active" && user.expiresAt && user.expiresAt <= Date.now()) {
+            user.status = "expired";
+            structuralChange = true;
+          }
+          const remaining = document.querySelector(`.remaining-live[data-id="${user.id}"]`);
+          if (remaining) remaining.textContent = remainingExact(user);
+        });
+        if (structuralChange) {
+          renderTable();
+        } else {
+          updateSummary();
+        }
+      }
+
+      setInterval(tickTable, 1000);
+    </script>
+  </body>
+</html>

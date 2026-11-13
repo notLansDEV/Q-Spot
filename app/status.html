@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eef4ff" />
+    <title>Q-Spot — Session status</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17223b;
+        --muted: #667085;
+        --line: #dce3ef;
+        --field: #f8faff;
+        --primary: #2858d6;
+        --primary-dark: #1946bb;
+        --accent: #00a88f;
+        --accent-dark: #087e6c;
+        --warn: #b54708;
+        --focus: rgba(40, 88, 214, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.88) 0, transparent 28%),
+          radial-gradient(circle at 88% 84%, rgba(184, 215, 255, 0.55) 0, transparent 30%),
+          linear-gradient(135deg, #f4f7ff 0%, #e9f2ff 50%, #eefbf8 100%);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      a {
+        transition:
+          border-color 180ms ease,
+          box-shadow 180ms ease,
+          color 180ms ease,
+          background-color 180ms ease,
+          transform 180ms ease;
+      }
+
+      .page {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        padding: 44px 20px;
+      }
+
+      .status-card {
+        width: min(100%, 540px);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.97);
+        box-shadow:
+          0 24px 70px rgba(39, 63, 116, 0.14),
+          0 4px 16px rgba(39, 63, 116, 0.06);
+        animation: rise 420ms ease both;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      .status-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 20px 32px;
+        border-bottom: 1px solid #edf0f5;
+      }
+
+      .brand-icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 12px;
+        color: #fff;
+        background: linear-gradient(145deg, #3468e8, #2453c8);
+        box-shadow: 0 8px 18px rgba(40, 88, 214, 0.25);
+      }
+
+      .brand-icon svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .brand-name {
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .status-body {
+        padding: 34px 32px 30px;
+        text-align: center;
+      }
+
+      .state-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 13px;
+        border-radius: 999px;
+        color: var(--accent-dark);
+        background: #e9fbf6;
+        font-size: 0.71rem;
+        font-weight: 780;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .status-dot {
+        position: relative;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .status-dot::after {
+        position: absolute;
+        inset: -4px;
+        border: 1px solid currentColor;
+        border-radius: inherit;
+        content: "";
+        animation: pulse 1.8s ease-out infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 0.7;
+          transform: scale(0.5);
+        }
+        75%,
+        100% {
+          opacity: 0;
+          transform: scale(1.45);
+        }
+      }
+
+      h1 {
+        margin: 16px 0 0;
+        font-size: clamp(1.6rem, 4.4vw, 2.05rem);
+        line-height: 1.15;
+        letter-spacing: -0.035em;
+      }
+
+      .subtitle {
+        max-width: 400px;
+        margin: 9px auto 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.55;
+      }
+
+      .session-card {
+        margin-top: 26px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fbfcff, #f7f9ff);
+        text-align: left;
+      }
+
+      .identity-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .identity-right {
+        text-align: right;
+      }
+
+      .label {
+        margin: 0;
+        color: #7c879b;
+        font-size: 0.68rem;
+        font-weight: 750;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .identity {
+        margin: 5px 0 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .identity.small {
+        font-size: 0.85rem;
+        font-weight: 650;
+        letter-spacing: 0;
+        text-transform: none;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .timer-block {
+        margin-top: 22px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+
+      .timer {
+        margin: 6px 0 12px;
+        font-size: clamp(2.1rem, 9vw, 2.7rem);
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.04em;
+        line-height: 1;
+      }
+
+      .progress {
+        height: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e6ecfa;
+      }
+
+      .progress span {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent), #2bb7a1);
+        transition: width 600ms linear;
+      }
+
+      .session-card.low .timer {
+        color: var(--warn);
+      }
+
+      .session-card.low .progress span {
+        background: linear-gradient(90deg, #d97706, #f59e0b);
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin: 22px 0 0;
+      }
+
+      .meta-grid dt {
+        color: #7c879b;
+        font-size: 0.66rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .meta-grid dd {
+        margin: 4px 0 0;
+        color: #3c4a63;
+        font-size: 0.8rem;
+        font-weight: 650;
+      }
+
+      .empty-card {
+        margin-top: 26px;
+        padding: 24px 20px;
+        border: 1px solid #f0d9b8;
+        border-radius: 14px;
+        background: #fff9f0;
+        text-align: left;
+      }
+
+      .empty-card .empty-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0;
+        color: #8a4b08;
+        font-size: 0.95rem;
+        font-weight: 750;
+      }
+
+      .empty-card .empty-title svg {
+        width: 20px;
+        height: 20px;
+        flex: none;
+      }
+
+      .empty-card p {
+        margin: 8px 0 0;
+        color: #7a6247;
+        font-size: 0.82rem;
+        line-height: 1.55;
+      }
+
+      .status-footer {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        padding: 20px 32px 24px;
+        border-top: 1px solid #edf0f5;
+        background: #fafbfe;
+      }
+
+      .footer-note {
+        margin: 0;
+        color: #8992a3;
+        font-size: 0.74rem;
+        text-align: center;
+      }
+
+      .button {
+        display: inline-flex;
+        width: 100%;
+        height: 46px;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 10px;
+        color: #fff;
+        background: var(--primary);
+        box-shadow: 0 8px 18px rgba(40, 88, 214, 0.2);
+        font-size: 0.92rem;
+        font-weight: 720;
+        text-decoration: none;
+      }
+
+      .button:hover {
+        background: var(--primary-dark);
+        box-shadow: 0 10px 22px rgba(40, 88, 214, 0.28);
+        transform: translateY(-1px);
+      }
+
+      .button:active {
+        transform: translateY(0);
+      }
+
+      .button:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 3px;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (max-width: 520px) {
+        .page {
+          display: block;
+          padding: 18px 14px;
+        }
+
+        .status-card {
+          max-width: none;
+        }
+
+        .status-header {
+          padding: 17px 22px;
+        }
+
+        .status-body {
+          padding: 28px 22px 26px;
+        }
+
+        .status-footer {
+          padding: 18px 22px 22px;
+        }
+
+        .identity-row {
+          gap: 12px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="status-card" aria-labelledby="status-title">
+        <header class="status-header">
+          <div class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M4.5 12.7a17.2 17.2 0 0 1 23 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <path d="M8.5 17.1a11.4 11.4 0 0 1 15 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <path d="M12.7 21.4a5.4 5.4 0 0 1 6.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <circle cx="16" cy="25.5" r="1.65" fill="currentColor" />
+            </svg>
+          </div>
+          <span class="brand-name">Q-Spot</span>
+        </header>
+
+        <div class="status-body">
+          <span class="state-badge" id="state-badge">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="state-label">Checking</span>
+          </span>
+
+          <h1 id="status-title">Checking your connection…</h1>
+          <p class="subtitle" id="status-subtitle">One moment while we confirm your session.</p>
+
+          <div class="session-card" id="session-card" hidden>
+            <div class="identity-row">
+              <div>
+                <p class="label">Signed in as</p>
+                <p class="identity" id="username">—</p>
+              </div>
+              <div class="identity-right">
+                <p class="label">Device</p>
+                <p class="identity small" id="device-ip">—</p>
+              </div>
+            </div>
+
+            <div class="timer-block">
+              <p class="label">Time remaining</p>
+              <p class="timer" id="time-remaining" role="timer">--:--</p>
+              <div class="progress" role="progressbar" aria-label="Session time remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                <span id="progress-fill"></span>
+              </div>
+            </div>
+
+            <dl class="meta-grid">
+              <div>
+                <dt>Connected at</dt>
+                <dd id="started-at">—</dd>
+              </div>
+              <div>
+                <dt>Session ends</dt>
+                <dd id="expires-at">—</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="empty-card" id="empty-card" hidden>
+            <p class="empty-title">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+                <path d="M12 7.5v5.2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                <circle cx="12" cy="16.4" r="1.05" fill="currentColor" />
+              </svg>
+              <span id="empty-title">No internet session yet</span>
+            </p>
+            <p id="empty-text">Sign in with a voucher or scan a QR code to start a new session.</p>
+          </div>
+        </div>
+
+        <footer class="status-footer">
+          <p class="footer-note" id="footer-note">Your access ends automatically when the timer runs out.</p>
+          <a class="button" id="portal-link" href="/">Return to portal</a>
+        </footer>
+      </section>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        badge: $("state-badge"),
+        label: $("state-label"),
+        title: $("status-title"),
+        subtitle: $("status-subtitle"),
+        sessionCard: $("session-card"),
+        emptyCard: $("empty-card"),
+        emptyTitle: $("empty-title"),
+        emptyText: $("empty-text"),
+        username: $("username"),
+        ip: $("device-ip"),
+        remaining: $("time-remaining"),
+        started: $("started-at"),
+        expires: $("expires-at"),
+        progress: $("progress-fill"),
+        progressBar: document.querySelector(".progress"),
+        note: $("footer-note"),
+        portalLink: $("portal-link"),
+      };
+
+      let session = null;
+      let ticker = null;
+
+      const pad = (value) => String(value).padStart(2, "0");
+
+      function formatDuration(totalSeconds) {
+        const seconds = Math.max(0, Math.floor(totalSeconds));
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return hours > 0 ? `${hours}:${pad(minutes)}:${pad(secs)}` : `${pad(minutes)}:${pad(secs)}`;
+      }
+
+      function formatClock(unixSeconds) {
+        return new Date(unixSeconds * 1000).toLocaleString([], {
+          dateStyle: "medium",
+          timeStyle: "short",
+        });
+      }
+
+      function setBadge(label, tone) {
+        els.label.textContent = label;
+        els.badge.dataset.tone = tone;
+        els.badge.style.color = tone === "warn" ? "var(--warn)" : tone === "idle" ? "#526077" : "var(--accent-dark)";
+        els.badge.style.background = tone === "warn" ? "#fff4e5" : tone === "idle" ? "#eef1f7" : "#e9fbf6";
+      }
+
+      function paintCountdown() {
+        if (!session) return;
+        const remaining = Math.max(0, session.expires - Date.now() / 1000);
+        els.remaining.textContent = formatDuration(remaining);
+
+        const total = Math.max(1, session.expires - session.started);
+        const percent = Math.max(0, Math.min(100, (remaining / total) * 100));
+        els.progress.style.width = `${percent}%`;
+        els.progressBar.setAttribute("aria-valuenow", String(Math.round(percent)));
+
+        const low = remaining <= 300;
+        els.sessionCard.classList.toggle("low", low && remaining > 0);
+        if (low && remaining > 0) setBadge("Ending soon", "warn");
+
+        if (remaining <= 0) {
+          stopTicker();
+          showExpired();
+        }
+      }
+
+      function startTicker() {
+        stopTicker();
+        ticker = window.setInterval(paintCountdown, 1000);
+      }
+
+      function stopTicker() {
+        if (ticker) {
+          window.clearInterval(ticker);
+          ticker = null;
+        }
+      }
+
+      function showActive(data) {
+        session = data;
+        setBadge("Active session", "active");
+        els.title.textContent = "You're connected";
+        els.subtitle.textContent =
+          "Your Q-Spot guest Wi-Fi session is active. Keep this page open to track your remaining time.";
+        els.username.textContent = data.username || "Guest";
+        els.ip.textContent = data.ip || "This device";
+        els.started.textContent = data.started ? formatClock(data.started) : "—";
+        els.expires.textContent = data.expires ? formatClock(data.expires) : "—";
+        els.sessionCard.hidden = false;
+        els.emptyCard.hidden = true;
+        els.note.textContent = "Your access ends automatically when the timer runs out.";
+        els.portalLink.textContent = "Return to portal";
+        paintCountdown();
+        startTicker();
+      }
+
+      function showIdle() {
+        session = null;
+        stopTicker();
+        setBadge("Not connected", "idle");
+        els.title.textContent = "No active session";
+        els.subtitle.textContent =
+          "This device doesn't have an active Q-Spot session right now.";
+        els.sessionCard.hidden = true;
+        els.emptyCard.hidden = false;
+        els.emptyTitle.textContent = "No internet session yet";
+        els.emptyText.textContent =
+          "Sign in with a voucher or scan a QR code from the portal to start a new session.";
+        els.note.textContent = "Vouchers are available from the front desk.";
+        els.portalLink.textContent = "Go to sign in";
+      }
+
+      function showExpired() {
+        session = null;
+        setBadge("Expired", "warn");
+        els.title.textContent = "Your session has ended";
+        els.subtitle.textContent =
+          "Your time is up. Sign in with a new voucher to keep browsing.";
+        els.sessionCard.hidden = true;
+        els.emptyCard.hidden = false;
+        els.emptyTitle.textContent = "Time ran out";
+        els.emptyText.textContent =
+          "Your guest access expired. Use a new voucher or QR code to reconnect.";
+        els.note.textContent = "Need more time? Ask the front desk for a new voucher.";
+        els.portalLink.textContent = "Sign in again";
+      }
+
+      function showError(message) {
+        session = null;
+        stopTicker();
+        setBadge("Status unavailable", "warn");
+        els.title.textContent = "Can't check your session";
+        els.subtitle.textContent = message || "The status service is unreachable. Check your connection and try again.";
+        els.sessionCard.hidden = true;
+        els.emptyCard.hidden = true;
+        els.note.textContent = "You can still try signing in from the portal.";
+        els.portalLink.textContent = "Return to portal";
+      }
+
+      async function refresh() {
+        try {
+          const response = await fetch("/api/status", { cache: "no-store" });
+          if (!response.ok) throw new Error("The status service returned an error.");
+          const data = await response.json();
+
+          if (!data || data.active === false) {
+            showIdle();
+            return;
+          }
+
+          if (data.expires && data.expires <= Date.now() / 1000) {
+            showExpired();
+            return;
+          }
+
+          const unchanged = session && session.expires === data.expires && session.username === data.username;
+          if (!unchanged) {
+            showActive(data);
+          } else {
+            session = data;
+            paintCountdown();
+          }
+        } catch (error) {
+          showError(error.message);
+        }
+      }
+
+      refresh();
+      window.setInterval(refresh, 20000);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) refresh();
+      });
+    </script>
+  </body>
+</html>

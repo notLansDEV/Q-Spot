@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eef4ff" />
+    <title>Q-Spot — Guest Wi-Fi</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17223b;
+        --muted: #667085;
+        --line: #dce3ef;
+        --field: #f8faff;
+        --primary: #2858d6;
+        --primary-dark: #1946bb;
+        --accent: #00a88f;
+        --focus: rgba(40, 88, 214, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.88) 0, transparent 28%),
+          radial-gradient(circle at 88% 84%, rgba(184, 215, 255, 0.55) 0, transparent 30%),
+          linear-gradient(135deg, #f4f7ff 0%, #e9f2ff 50%, #eefbf8 100%);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button,
+      a,
+      input {
+        transition:
+          border-color 180ms ease,
+          box-shadow 180ms ease,
+          color 180ms ease,
+          background-color 180ms ease,
+          transform 180ms ease;
+      }
+
+      .page {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        padding: 44px 20px;
+      }
+
+      .portal-card {
+        width: min(100%, 820px);
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow:
+          0 24px 70px rgba(39, 63, 116, 0.14),
+          0 4px 16px rgba(39, 63, 116, 0.06);
+      }
+
+      .portal-header {
+        padding: 34px 48px 28px;
+        border-bottom: 1px solid #edf0f5;
+        text-align: center;
+      }
+
+      .brand-icon {
+        display: grid;
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 14px;
+        place-items: center;
+        border-radius: 15px;
+        color: #fff;
+        background: linear-gradient(145deg, #3468e8, #2453c8);
+        box-shadow: 0 9px 22px rgba(40, 88, 214, 0.25);
+      }
+
+      .brand-icon svg {
+        width: 29px;
+        height: 29px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.55rem, 3vw, 2rem);
+        line-height: 1.2;
+        letter-spacing: -0.035em;
+      }
+
+      .subtitle {
+        max-width: 460px;
+        margin: 8px auto 0;
+        color: var(--muted);
+        font-size: 0.94rem;
+        line-height: 1.55;
+      }
+
+      .login-options {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 57px minmax(0, 1fr);
+        align-items: stretch;
+        padding: 36px 40px 32px;
+      }
+
+      .option-panel {
+        min-width: 0;
+        padding: 0 8px;
+      }
+
+      .option-kicker {
+        margin: 0 0 6px;
+        color: var(--primary);
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 1.18rem;
+        letter-spacing: -0.02em;
+      }
+
+      .option-description {
+        min-height: 42px;
+        margin: 7px 0 20px;
+        color: var(--muted);
+        font-size: 0.84rem;
+        line-height: 1.5;
+      }
+
+      .field-group {
+        margin-bottom: 15px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 0.8rem;
+        font-weight: 680;
+      }
+
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        height: 46px;
+        padding: 0 14px;
+        border: 1px solid #ccd5e3;
+        border-radius: 10px;
+        outline: none;
+        color: var(--ink);
+        background: var(--field);
+      }
+
+      input::placeholder {
+        color: #98a2b3;
+      }
+
+      input[type="text"]:hover,
+      input[type="password"]:hover {
+        border-color: #9facc0;
+      }
+
+      input[type="text"]:focus,
+      input[type="password"]:focus {
+        border-color: var(--primary);
+        background: #fff;
+        box-shadow: 0 0 0 4px var(--focus);
+      }
+
+      .password-wrap {
+        position: relative;
+      }
+
+      .password-wrap input {
+        padding-right: 66px;
+      }
+
+      .password-toggle {
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        padding: 7px 8px;
+        border: 0;
+        border-radius: 7px;
+        color: var(--primary);
+        background: transparent;
+        cursor: pointer;
+        font-size: 0.74rem;
+        font-weight: 720;
+        transform: translateY(-50%);
+      }
+
+      .password-toggle:hover {
+        background: #eaf0ff;
+      }
+
+      .password-toggle:focus-visible {
+        outline: 3px solid var(--focus);
+      }
+
+      .connect-button {
+        width: 100%;
+        height: 48px;
+        margin-top: 4px;
+        border: 0;
+        border-radius: 10px;
+        color: #fff;
+        background: var(--primary);
+        box-shadow: 0 8px 18px rgba(40, 88, 214, 0.2);
+        cursor: pointer;
+        font-weight: 720;
+      }
+
+      .connect-button:hover {
+        background: var(--primary-dark);
+        box-shadow: 0 10px 22px rgba(40, 88, 214, 0.28);
+        transform: translateY(-1px);
+      }
+
+      .connect-button:active {
+        transform: translateY(0);
+      }
+
+      .connect-button:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 3px;
+      }
+
+      .divider {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .divider::before {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 1px;
+        background: var(--line);
+        content: "";
+      }
+
+      .or-badge {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        color: #788398;
+        background: #fff;
+        box-shadow: 0 3px 9px rgba(43, 57, 88, 0.07);
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+
+      .qr-panel {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .qr-panel .option-description {
+        margin-bottom: 14px;
+      }
+
+      .qr-frame {
+        display: grid;
+        width: 158px;
+        height: 158px;
+        padding: 12px;
+        place-items: center;
+        border: 1px solid #d8dfeb;
+        border-radius: 13px;
+        background:
+          linear-gradient(var(--primary), var(--primary)) left top / 24px 2px no-repeat,
+          linear-gradient(var(--primary), var(--primary)) left top / 2px 24px no-repeat,
+          linear-gradient(var(--primary), var(--primary)) right top / 24px 2px no-repeat,
+          linear-gradient(var(--primary), var(--primary)) right top / 2px 24px no-repeat,
+          linear-gradient(var(--primary), var(--primary)) left bottom / 24px 2px no-repeat,
+          linear-gradient(var(--primary), var(--primary)) left bottom / 2px 24px no-repeat,
+          linear-gradient(var(--primary), var(--primary)) right bottom / 24px 2px no-repeat,
+          linear-gradient(var(--primary), var(--primary)) right bottom / 2px 24px no-repeat,
+          #fff;
+        box-shadow: 0 8px 22px rgba(32, 56, 104, 0.08);
+      }
+
+      .qr-frame svg {
+        display: block;
+        width: 125px;
+        height: 125px;
+      }
+
+
+      .camera-frame { padding: 8px; }
+      .camera-button {
+        display: flex; width: 100%; height: 100%; min-height: 126px;
+        flex-direction: column; align-items: center; justify-content: center;
+        gap: 10px; border: 0; border-radius: 9px; color: var(--primary);
+        background: #f3f6ff; cursor: pointer; font-weight: 750;
+      }
+      .camera-button svg { width: 42px; height: 42px; }
+      .camera-button:hover { background: #eaf0ff; }
+      .camera-button:focus-visible { outline: 3px solid var(--focus); }
+      .scan-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin: 17px 0 0;
+        color: #526077;
+        font-size: 0.78rem;
+        font-weight: 650;
+      }
+
+      .status-dot {
+        position: relative;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .status-dot::after {
+        position: absolute;
+        inset: -4px;
+        border: 1px solid var(--accent);
+        border-radius: inherit;
+        content: "";
+        animation: pulse 1.8s ease-out infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 0.7;
+          transform: scale(0.5);
+        }
+        75%,
+        100% {
+          opacity: 0;
+          transform: scale(1.45);
+        }
+      }
+
+      .portal-footer {
+        padding: 22px 48px 25px;
+        border-top: 1px solid #edf0f5;
+        background: #fafbfe;
+        text-align: center;
+      }
+
+      .terms-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 9px;
+        color: #5b6679;
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .terms-row input {
+        width: 16px;
+        height: 16px;
+        margin: 1px 0 0;
+        accent-color: var(--primary);
+        cursor: pointer;
+      }
+
+      a {
+        color: #284fbd;
+        font-weight: 650;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      a:hover {
+        color: #153a9d;
+      }
+
+      a:focus-visible {
+        border-radius: 3px;
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .help-note {
+        margin: 11px 0 0;
+        color: #8992a3;
+        font-size: 0.75rem;
+      }
+
+      .form-message {
+        min-height: 19px;
+        margin: 11px 0 -7px;
+        color: #087e6c;
+        font-size: 0.76rem;
+        font-weight: 650;
+        text-align: center;
+      }
+
+      @media (max-width: 680px) {
+        .page {
+          display: block;
+          padding: 18px 14px;
+        }
+
+        .portal-header {
+          padding: 27px 24px 23px;
+        }
+
+        .brand-icon {
+          width: 48px;
+          height: 48px;
+          margin-bottom: 12px;
+        }
+
+        .login-options {
+          display: block;
+          padding: 27px 24px 30px;
+        }
+
+        .option-panel {
+          padding: 0;
+        }
+
+        .option-description {
+          min-height: 0;
+        }
+
+        .divider {
+          height: 55px;
+          margin: 9px 0;
+        }
+
+        .divider::before {
+          top: 50%;
+          right: 0;
+          bottom: auto;
+          left: 0;
+          width: auto;
+          height: 1px;
+        }
+
+        .qr-panel {
+          padding-top: 3px;
+        }
+
+        .portal-footer {
+          padding: 20px 24px 22px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="portal-card" aria-labelledby="portal-title">
+        <header class="portal-header">
+          <div class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M4.5 12.7a17.2 17.2 0 0 1 23 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <path d="M8.5 17.1a11.4 11.4 0 0 1 15 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <path d="M12.7 21.4a5.4 5.4 0 0 1 6.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <circle cx="16" cy="25.5" r="1.65" fill="currentColor" />
+            </svg>
+          </div>
+          <h1 id="portal-title">Q-Spot</h1>
+          <p class="subtitle">Fast, simple guest Wi-Fi access. Sign in with your voucher or scan a QR code.</p>
+        </header>
+
+        <div class="login-options">
+          <section class="option-panel" aria-labelledby="credentials-title">
+            <p class="option-kicker">Option 1</p>
+            <h2 id="credentials-title">Sign in with credentials</h2>
+            <p class="option-description">Enter your short voucher code. Admin credentials use this same form.</p>
+
+            <form id="login-form">
+              <div class="field-group">
+                <label for="username">Username / Voucher</label>
+                <input id="username" name="username" type="text" placeholder="Username" autocomplete="username" required />
+              </div>
+              <div class="field-group">
+                <label for="password">Password</label>
+                <div class="password-wrap">
+                  <input id="password" name="password" type="password" placeholder="Password" autocomplete="current-password" required />
+                  <button class="password-toggle" id="password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show</button>
+                </div>
+              </div>
+              <button class="connect-button" type="submit">Connect</button>
+              <p class="form-message" id="form-message" aria-live="polite"></p>
+            </form>
+          </section>
+
+          <div class="divider" aria-hidden="true">
+            <span class="or-badge">OR</span>
+          </div>
+
+          <section class="option-panel qr-panel" aria-labelledby="qr-title">
+            <p class="option-kicker">Option 2</p>
+            <h2 id="qr-title">Quick QR scan</h2>
+            <p class="option-description">Tap below to open your camera and scan a Q-Spot voucher.</p>
+
+            <div class="qr-frame camera-frame">
+              <button class="camera-button" id="camera-button" type="button" aria-label="Open camera to scan QR code">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h3l1.4-2h7.2l1.4 2h3A1.5 1.5 0 0 1 21.5 9v9a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 18V9A1.5 1.5 0 0 1 4 7.5Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="13.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                <span>Open camera</span>
+              </button>
+              <input id="qr-photo" type="file" accept="image/*" capture="environment" hidden />
+            </div>
+            <p class="scan-status"><span class="status-dot" aria-hidden="true"></span><span id="scan-status-text">Ready to scan a voucher</span></p>
+          </section>
+        </div>
+
+        <footer class="portal-footer">
+          <label class="terms-row" for="terms">
+            <input id="terms" name="terms" type="checkbox" form="login-form" required />
+            <span>I agree to the <a href="#terms-policy">Terms of Service &amp; Acceptable Use Policy</a></span>
+          </label>
+          <p class="help-note">Need help? Contact Front Desk</p>
+        </footer>
+      </section>
+    </main>
+
+    <script>
+
+      const password = document.getElementById("password");
+      const passwordToggle = document.getElementById("password-toggle");
+      const loginForm = document.getElementById("login-form");
+      const formMessage = document.getElementById("form-message");
+      const cameraButton = document.getElementById("camera-button");
+      const qrPhoto = document.getElementById("qr-photo");
+      const scanStatus = document.getElementById("scan-status-text");
+
+      passwordToggle.addEventListener("click", () => {
+        const willShow = password.type === "password";
+        password.type = willShow ? "text" : "password";
+        passwordToggle.textContent = willShow ? "Hide" : "Show";
+        passwordToggle.setAttribute("aria-label", willShow ? "Hide password" : "Show password");
+        passwordToggle.setAttribute("aria-pressed", String(willShow));
+      });
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!document.getElementById("terms").checked) {
+          formMessage.textContent = "Please accept the terms to continue.";
+          return;
+        }
+        formMessage.textContent = "Checking your access…";
+        try {
+          const response = await fetch("/api/login", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+              username: document.getElementById("username").value.trim(),
+              password: password.value
+            })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Login failed.");
+          window.location.href = result.redirect || "/connected";
+        } catch (error) {
+          formMessage.textContent = error.message || "Could not connect. Try again.";
+        }
+      });
+
+      cameraButton.addEventListener("click", () => qrPhoto.click());
+      qrPhoto.addEventListener("change", async () => {
+        if (!qrPhoto.files || !qrPhoto.files[0]) return;
+        scanStatus.textContent = "Reading QR image…";
+        const data = new FormData();
+        data.append("image", qrPhoto.files[0]);
+        try {
+          const response = await fetch("/api/scan", {method: "POST", body: data});
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Could not read QR code.");
+          if (result.token) {
+            scanStatus.textContent = "Voucher found. Connecting…";
+            const redeemed = await fetch("/api/redeem", {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({token: result.token})
+            });
+            const outcome = await redeemed.json();
+            if (!redeemed.ok) throw new Error(outcome.error || "Voucher could not be redeemed.");
+            window.location.href = outcome.redirect || "/connected";
+          } else {
+            throw new Error("No Q-Spot voucher QR found in that image.");
+          }
+        } catch (error) {
+          scanStatus.textContent = error.message || "Scan failed. Try again.";
+        } finally {
+          qrPhoto.value = "";
+        }
+      });
+
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      if (token) {
+        scanStatus.textContent = "Voucher link detected. Connecting…";
+        fetch("/api/redeem", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({token})
+        }).then(async response => {
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Voucher expired or already used.");
+          window.location.href = result.redirect || "/connected";
+        }).catch(error => {
+          scanStatus.textContent = error.message;
+        });
+      }
+
+    </script>
+  </body>
+</html>
