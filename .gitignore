@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local configuration and secrets
+config.env
+
+# Runtime state: live voucher database, DHCP leases and daemon logs
+data/*.sqlite3
+data/*.sqlite3-*
+data/*.log
+data/*.leases
+
+# Generated voucher QR images
+qr/
+
+# Editor / OS noise
+.DS_Store
+*.swp

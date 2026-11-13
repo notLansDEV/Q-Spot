@@ -7,11 +7,12 @@ QR=ROOT/"qr"
 GATEWAY=os.environ.get("GATEWAY_IP","10.42.0.1")
 PORT=int(os.environ.get("PORTAL_PORT","8081"))
 def run(a): return subprocess.run(a,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-def code(n=4): return ''.join(secrets.choice("ABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(n))
+def code(n=5): return ''.join(secrets.choice("ABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(n))
+def pin(n=4): return ''.join(secrets.choice("0123456789") for _ in range(n))
 def create(minutes):
     con=sqlite3.connect(DB)
     for _ in range(30):
-        u,p,t=code(),code(),secrets.token_urlsafe(24)
+        u,p,t=code(),pin(),secrets.token_urlsafe(24)
         try:
             cur=con.execute("INSERT INTO vouchers(username,password,token,minutes,created) VALUES(?,?,?,?,?)",(u,p,t,minutes,time.time()))
             con.commit(); vid=cur.lastrowid; break
@@ -27,7 +28,8 @@ def revoke(sid):
     con=sqlite3.connect(DB); row=con.execute("SELECT ip FROM sessions WHERE id=? AND active=1",(sid,)).fetchone()
     if row:
         con.execute("UPDATE sessions SET active=0 WHERE id=?",(sid,)); con.commit()
-        run(["iptables","-D","QSPOT_FORWARD","-s",row[0],"-j","ACCEPT"])
+        run(["iptables","-w","5","-D","QSPOT_FORWARD","-s",row[0],"-j","ACCEPT"])
+        run(["iptables","-w","5","-t","nat","-D","PREROUTING","-s",row[0],"-p","tcp","--dport","80","-j","RETURN","-m","comment","--comment","qspot-client"])
         run(["conntrack","-D","-s",row[0]])
     con.close()
 def clear():
@@ -91,7 +93,7 @@ def menu():
                 else: print("  No active sessions.")
                 pause()
             elif choice=="Open admin URL":
-                url=f"http://127.0.0.1:{PORT}/admin"; print("  Admin:",url)
+                url=f"http://127.0.0.1:{PORT}/admin.html"; print("  Admin:",url)
                 subprocess.Popen(["xdg-open",url],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
                 pause()
             else: return

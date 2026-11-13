@@ -826,6 +826,15 @@
         background: #d39518;
       }
 
+      .status-pill.ready {
+        color: var(--primary);
+        background: var(--primary-soft);
+      }
+
+      .status-pill.ready::before {
+        background: var(--primary);
+      }
+
       .status-pill.expired {
         color: var(--danger);
         background: var(--danger-soft);
@@ -961,49 +970,6 @@
         justify-content: flex-end;
         gap: 9px;
         padding: 18px 24px 24px;
-      }
-
-      .guest-preview {
-        max-width: 390px;
-        padding: 0;
-      }
-
-      .guest-screen {
-        padding: 32px 28px;
-        background: linear-gradient(145deg, #f4f7ff, #edf9f6);
-        text-align: center;
-      }
-
-      .guest-wifi {
-        display: grid;
-        width: 48px;
-        height: 48px;
-        margin: 0 auto 12px;
-        place-items: center;
-        border-radius: 14px;
-        color: #fff;
-        background: var(--primary);
-      }
-
-      .guest-screen h3 {
-        margin: 0;
-        font-size: 1.18rem;
-      }
-
-      .guest-screen p {
-        margin: 7px 0 20px;
-        color: var(--muted);
-        font-size: 0.76rem;
-        line-height: 1.5;
-      }
-
-      .guest-screen input {
-        margin-bottom: 9px;
-        background: #fff;
-      }
-
-      .guest-screen .primary-button {
-        width: 100%;
       }
 
       .toast {
@@ -1172,13 +1138,7 @@
             <span class="live-dot" aria-hidden="true"></span>
             <span><strong id="header-active">0</strong> active users</span>
           </div>
-          <button class="secondary-button" id="preview-guest" type="button">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" />
-              <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8" />
-            </svg>
-            Preview Guest Portal
-          </button>
+          <button class="secondary-button" id="admin-logout" type="button">Log out</button>
         </div>
       </header>
 
@@ -1210,7 +1170,7 @@
             <span class="stat-label">Total sales</span>
             <div class="stat-value-line">
               <strong class="stat-value" id="total-sales">₱0</strong>
-              <button class="eye-button sales-eye" id="toggle-sales" type="button" aria-label="Hide total sales" aria-pressed="true">
+              <button class="eye-button sales-eye" id="toggle-sales" type="button" aria-label="Show total sales" aria-pressed="false">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" />
                   <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8" />
@@ -1234,13 +1194,13 @@
             <div class="field">
               <label for="voucher-code">Voucher Code</label>
               <div class="input-action">
-                <input id="voucher-code" type="text" placeholder="e.g. GUEST-4821" required />
+                <input id="voucher-code" type="text" placeholder="5 letters/numbers" maxlength="5" minlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="characters" required />
                 <button class="auto-button" id="auto-generate" type="button">Auto-Generate</button>
               </div>
             </div>
             <div class="field">
               <label for="voucher-password">Password</label>
-              <input id="voucher-password" type="text" placeholder="Enter a secure password" required />
+              <input id="voucher-password" type="text" placeholder="4-digit password" maxlength="4" minlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" required />
             </div>
             <div class="field full">
               <span class="field-label">Access duration</span>
@@ -1323,8 +1283,8 @@
         </header>
         <form id="edit-form">
           <div class="modal-body">
-            <div class="field"><label for="edit-code">Voucher Code</label><input id="edit-code" type="text" required /></div>
-            <div class="field"><label for="edit-password">Password</label><input id="edit-password" type="text" required /></div>
+            <div class="field"><label for="edit-code">Voucher Code</label><input id="edit-code" type="text" maxlength="5" minlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="characters" required /></div>
+            <div class="field"><label for="edit-password">Password</label><input id="edit-password" type="text" maxlength="4" minlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" required /></div>
             <div class="field">
               <span class="field-label">Access duration</span>
               <div class="modal-pills" id="edit-duration-pills">
@@ -1339,28 +1299,6 @@
             <button class="primary-button" type="submit">Save Changes</button>
           </footer>
         </form>
-      </section>
-    </div>
-
-    <div class="modal-backdrop" id="guest-backdrop" role="presentation">
-      <section class="modal guest-preview" role="dialog" aria-modal="true" aria-labelledby="guest-title">
-        <header class="modal-header">
-          <div><p class="eyebrow">Live preview</p><h2 id="guest-title">Guest login portal</h2></div>
-          <button class="close-button" type="button" data-close="guest-backdrop" aria-label="Close guest preview">×</button>
-        </header>
-        <div class="guest-screen">
-          <div class="guest-wifi" aria-hidden="true">
-            <svg width="25" height="25" viewBox="0 0 32 32" fill="none">
-              <path d="M4.5 12.7a17.2 17.2 0 0 1 23 0M8.5 17.1a11.4 11.4 0 0 1 15 0M12.7 21.4a5.4 5.4 0 0 1 6.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
-              <circle cx="16" cy="25.5" r="1.65" fill="currentColor" />
-            </svg>
-          </div>
-          <h3>Guest Wi-Fi Access</h3>
-          <p>Enter your voucher credentials to connect securely.</p>
-          <input type="text" placeholder="Voucher Code" aria-label="Preview username" />
-          <input type="password" placeholder="Password" aria-label="Preview password" />
-          <button class="primary-button" type="button">Connect to Wi-Fi</button>
-        </div>
       </section>
     </div>
 
@@ -1383,22 +1321,82 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
-      const HOUR = 60 * 60 * 1000;
       const durationNames = { 1: "1 Hour", 24: "1 Day", 48: "2 Days" };
       const prices = { 1: 5, 24: 20, 48: 35 };
-      let totalSales = 80;
-      let salesVisible = true;
+      let totalSales = 0;
+      let salesVisible = false; // hidden by default; the eye toggles it
       let selectedDuration = 1;
       let editDuration = 1;
       let editingId = null;
       let toastTimer;
 
-      let users = [
-        { id: 1, code: "LOBBY-8421", password: "stay2025", hours: 1, status: "active", createdAt: Date.now() - 18 * 60 * 1000, expiresAt: Date.now() + 42 * 60 * 1000, reveal: false },
-        { id: 2, code: "CAFE-GUEST-17", password: "brew&browse", hours: 24, status: "active", createdAt: Date.now() - 5.6 * HOUR, expiresAt: Date.now() + 18.4 * HOUR, reveal: false },
-        { id: 3, code: "ROOM-305", password: "welcome305", hours: 48, status: "unused", createdAt: Date.now() - 3 * HOUR, expiresAt: null, reveal: false },
-        { id: 4, code: "EVENT-9026", password: "connectNow", hours: 24, status: "active", createdAt: Date.now() - 17.8 * HOUR, expiresAt: Date.now() + 6.2 * HOUR, reveal: false }
-      ];
+      let users = [];
+
+      async function api(url, body) {
+        const response = await fetch(url, {
+          method: body ? "POST" : "GET",
+          headers: body ? { "Content-Type": "application/json" } : {},
+          body: body ? JSON.stringify(body) : undefined,
+          cache: "no-store"
+        });
+        let result = {};
+        try {
+          result = await response.json();
+        } catch (error) {
+          throw new Error("The server did not return a valid response.");
+        }
+        if (!response.ok) throw new Error(result.error || "Request failed.");
+        return result;
+      }
+
+      function priceFor(minutes) {
+        if (minutes <= 60) return prices[1];
+        if (minutes <= 1440) return prices[24];
+        if (minutes <= 2880) return prices[48];
+        return Math.ceil(minutes / 1440) * prices[24];
+      }
+
+      function loadUsers(data) {
+        const previous = new Map(users.map((user) => [user.id, user]));
+        const sessionRows = data.sessions || [];
+        users = (data.vouchers || []).map((voucher) => {
+          const matches = sessionRows.filter((session) => session.username === voucher.username);
+          const live = matches.find((session) => session.active && session.expires * 1000 > Date.now());
+          const last = matches[0];
+          const voucherExpiry = voucher.expires ? voucher.expires * 1000 : null;
+          const expiresAt = live ? live.expires * 1000 : (voucherExpiry || (last && last.expires ? last.expires * 1000 : null));
+          let status = "unused";
+          if (voucher.revoked) status = "expired";
+          else if (live) status = "active";
+          else if (voucher.used) status = expiresAt && expiresAt > Date.now() ? "ready" : "expired";
+          return {
+            id: voucher.id,
+            code: voucher.username,
+            password: voucher.password,
+            minutes: voucher.minutes,
+            hours: voucher.minutes / 60,
+            status,
+            used: Boolean(voucher.used),
+            createdAt: voucher.created * 1000,
+            expiresAt,
+            qr: voucher.qr || "",
+            reveal: previous.get(voucher.id)?.reveal || false
+          };
+        });
+        renderTable();
+      }
+
+      async function refreshData() {
+        try {
+          loadUsers(await api("/api/admin/data"));
+        } catch (error) {
+          if (/login required/i.test(error.message)) {
+            window.location.href = "/";
+            return;
+          }
+          showToast(error.message);
+        }
+      }
 
       const elements = {
         body: document.getElementById("users-body"),
@@ -1435,7 +1433,10 @@
       }
 
       function durationLabel(hours) {
-        return durationNames[hours] || `${hours} Hours`;
+        if (durationNames[hours]) return durationNames[hours];
+        if (hours < 24) return `${Number(hours.toFixed(2))} Hours`;
+        const days = hours / 24;
+        return Number.isInteger(days) ? `${days} Days` : `${Number(days.toFixed(2))} Days`;
       }
 
       const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
@@ -1470,11 +1471,8 @@
       function statusLabel(status) {
         if (status === "active") return "Active";
         if (status === "expired") return "Expired";
+        if (status === "ready") return "Ready";
         return "Unused";
-      }
-
-      function qrPayload(user) {
-        return `WIFI:T:nopass;S:Guest Wi-Fi;U:${user.code};P:${user.password};D:${user.hours}h;;`;
       }
 
       function eyeIcon() {
@@ -1512,6 +1510,7 @@
 
       function updateSummary() {
         const active = users.filter((user) => user.status === "active" && (!user.expiresAt || user.expiresAt > Date.now())).length;
+        totalSales = users.filter((user) => user.used).reduce((sum, user) => sum + priceFor(user.minutes), 0);
         document.getElementById("total-vouchers").textContent = users.length;
         document.getElementById("active-users").textContent = active;
         document.getElementById("header-active").textContent = active;
@@ -1528,10 +1527,15 @@
       }
 
       function randomCode() {
-        const number = Math.floor(1000 + Math.random() * 9000);
-        elements.code.value = `GUEST-${number}`;
-        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-        elements.password.value = Array.from({ length: 9 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        const values = new Uint32Array(5);
+        if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(values);
+        else for (let i = 0; i < values.length; i += 1) values[i] = Math.floor(Math.random() * 4294967296);
+        elements.code.value = Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
+        const digits = new Uint32Array(4);
+        if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(digits);
+        else for (let i = 0; i < digits.length; i += 1) digits[i] = Math.floor(Math.random() * 10);
+        elements.password.value = Array.from(digits, (value) => String(value % 10)).join("");
       }
 
       function hashString(text) {
@@ -1587,6 +1591,23 @@
         }
       }
 
+      function drawServerQr(url, canvas = elements.canvas) {
+        if (!url) {
+          drawQrPattern("wifi-admin-ready", canvas);
+          return;
+        }
+        const image = new Image();
+        image.onload = () => {
+          const context = canvas.getContext("2d");
+          context.fillStyle = "#ffffff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.imageSmoothingEnabled = false;
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        };
+        image.onerror = () => drawQrPattern(url, canvas);
+        image.src = url;
+      }
+
       function showToast(message) {
         clearTimeout(toastTimer);
         elements.toast.textContent = message;
@@ -1622,6 +1643,18 @@
       }
 
       document.getElementById("auto-generate").addEventListener("click", randomCode);
+      elements.code.addEventListener("input", () => {
+        elements.code.value = elements.code.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
+      });
+      elements.password.addEventListener("input", () => {
+        elements.password.value = elements.password.value.replace(/[^0-9]/g, "").slice(0, 4);
+      });
+      elements.editCode.addEventListener("input", () => {
+        elements.editCode.value = elements.editCode.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
+      });
+      elements.editPassword.addEventListener("input", () => {
+        elements.editPassword.value = elements.editPassword.value.replace(/[^0-9]/g, "").slice(0, 4);
+      });
 
       document.getElementById("duration-pills").addEventListener("click", (event) => {
         const button = event.target.closest(".duration-pill");
@@ -1631,7 +1664,7 @@
         elements.customTime.classList.toggle("visible", selectedDuration === "custom");
       });
 
-      elements.form.addEventListener("submit", (event) => {
+      elements.form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const hours = selectedDuration === "custom" ? Number(elements.customHours.value) : selectedDuration;
         if (!hours || hours < 1) {
@@ -1639,35 +1672,37 @@
           return;
         }
         const code = elements.code.value.trim();
-        if (users.some((user) => user.code.toLowerCase() === code.toLowerCase())) {
-          showToast("That voucher code already exists. Please use another.");
-          elements.code.focus();
+        const password = elements.password.value;
+        if (!code || !password) {
+          showToast("Enter a voucher code and password.");
           return;
         }
-        const user = {
-          id: Date.now(),
-          code,
-          password: elements.password.value,
-          hours,
-          status: "unused",
-          createdAt: Date.now(),
-          expiresAt: null,
-          reveal: false
-        };
-        users.unshift(user);
-        totalSales += prices[hours] || 0;
-        elements.previewCode.textContent = code;
-        elements.previewMeta.innerHTML = `Password: <span>${escapeHTML(user.password)}</span> · ${escapeHTML(durationLabel(hours))}<br><span>Guest Wi-Fi Access</span>`;
-        drawQrPattern(qrPayload(user));
-        renderTable();
-        elements.form.reset();
-        selectedDuration = 1;
-        setDuration(document.getElementById("duration-pills"), 1);
-        elements.customTime.classList.remove("visible");
-        showToast(`${code} was generated and added successfully.`);
+        const submitButton = elements.form.querySelector("button[type='submit']");
+        submitButton.disabled = true;
+        try {
+          const voucher = await api("/api/admin/voucher", {
+            username: code,
+            password,
+            minutes: Math.round(hours * 60)
+          });
+          const qrUrl = voucher.qr ? `/qr/${voucher.qr.split("/").pop()}` : "";
+          elements.previewCode.textContent = voucher.username;
+          elements.previewMeta.innerHTML = `Password: <span>${escapeHTML(voucher.password)}</span> · ${escapeHTML(durationLabel(Math.round(voucher.minutes / 60)))}<br><span>Guest Wi-Fi Access</span>`;
+          drawServerQr(qrUrl);
+          showToast(`${voucher.username} was generated successfully.`);
+          await refreshData();
+          elements.form.reset();
+          selectedDuration = 1;
+          setDuration(document.getElementById("duration-pills"), 1);
+          elements.customTime.classList.remove("visible");
+        } catch (error) {
+          showToast(error.message);
+        } finally {
+          submitButton.disabled = false;
+        }
       });
 
-      elements.body.addEventListener("click", (event) => {
+      elements.body.addEventListener("click", async (event) => {
         const button = event.target.closest("button[data-action]");
         if (!button) return;
         const id = Number(button.dataset.id);
@@ -1679,23 +1714,27 @@
         }
         if (button.dataset.action === "edit") {
           editingId = id;
-          editDuration = [1, 24, 48].includes(user.hours) ? user.hours : 1;
+          editDuration = user.hours;
           elements.editCode.value = user.code;
           elements.editPassword.value = user.password;
-          setDuration(document.getElementById("edit-duration-pills"), editDuration);
+          setDuration(document.getElementById("edit-duration-pills"), [1, 24, 48].includes(user.hours) ? user.hours : null);
           openModal(elements.editBackdrop);
         }
         if (button.dataset.action === "qr") {
-          drawQrPattern(qrPayload(user), elements.largeCanvas);
+          drawServerQr(user.qr, elements.largeCanvas);
           elements.largeQrTitle.textContent = `QR code · ${user.code}`;
           elements.largePreviewCode.textContent = user.code;
           elements.largePreviewMeta.innerHTML = `Password: <span>${escapeHTML(user.password)}</span> · ${escapeHTML(durationLabel(user.hours))}<br><span>${escapeHTML(remainingExact(user))}</span>`;
           openModal(document.getElementById("qr-backdrop"));
         }
         if (button.dataset.action === "remove" && confirm(`Remove ${user.code} and disconnect this voucher?`)) {
-          users = users.filter((item) => item.id !== id);
-          renderTable();
-          showToast(`${user.code} was removed.`);
+          try {
+            await api("/api/admin/delete", { id: user.id });
+            showToast(`${user.code} was removed.`);
+            await refreshData();
+          } catch (error) {
+            showToast(error.message);
+          }
         }
       });
 
@@ -1706,17 +1745,29 @@
         setDuration(document.getElementById("edit-duration-pills"), editDuration);
       });
 
-      elements.editForm.addEventListener("submit", (event) => {
+      elements.editForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const user = users.find((item) => item.id === editingId);
         if (!user) return;
-        user.code = elements.editCode.value.trim();
-        user.password = elements.editPassword.value;
-        user.hours = editDuration;
-        if (user.status === "active") user.expiresAt = Date.now() + editDuration * HOUR;
-        renderTable();
-        closeModal(elements.editBackdrop);
-        showToast(`${user.code} was updated.`);
+        const username = elements.editCode.value.trim();
+        const password = elements.editPassword.value;
+        if (!username || !password) {
+          showToast("Voucher code and password are required.");
+          return;
+        }
+        try {
+          await api("/api/admin/update", {
+            id: user.id,
+            username,
+            password,
+            minutes: editDuration * 60
+          });
+          closeModal(elements.editBackdrop);
+          showToast(`${username} was updated.`);
+          await refreshData();
+        } catch (error) {
+          showToast(error.message);
+        }
       });
 
       function selectedIds() {
@@ -1742,16 +1793,19 @@
         syncSelectionTools();
       });
 
-      elements.removeSelected.addEventListener("click", () => {
+      elements.removeSelected.addEventListener("click", async () => {
         const ids = selectedIds();
         if (ids.length && confirm(`Remove ${ids.length} selected voucher${ids.length > 1 ? "s" : ""}?`)) {
-          users = users.filter((user) => !ids.includes(user.id));
-          renderTable();
-          showToast(`${ids.length} voucher${ids.length > 1 ? "s were" : " was"} removed.`);
+          try {
+            await Promise.all(ids.map((id) => api("/api/admin/delete", { id })));
+            showToast(`${ids.length} voucher${ids.length > 1 ? "s were" : " was"} removed.`);
+            await refreshData();
+          } catch (error) {
+            showToast(error.message);
+          }
         }
       });
 
-      document.getElementById("preview-guest").addEventListener("click", () => openModal(document.getElementById("guest-backdrop")));
       elements.toggleSales.addEventListener("click", () => {
         salesVisible = !salesVisible;
         updateSales();
@@ -1778,14 +1832,24 @@
         }
       });
 
+      document.getElementById("admin-logout").addEventListener("click", async () => {
+        try {
+          await fetch("/api/admin/logout", { method: "POST" });
+        } finally {
+          window.location.href = "/";
+        }
+      });
+
       randomCode();
       drawQrPattern("wifi-admin-ready");
       renderTable();
+      refreshData();
+      setInterval(refreshData, 5000);
 
       function tickTable() {
         let structuralChange = false;
         users.forEach((user) => {
-          if (user.status === "active" && user.expiresAt && user.expiresAt <= Date.now()) {
+          if ((user.status === "active" || user.status === "ready") && user.expiresAt && user.expiresAt <= Date.now()) {
             user.status = "expired";
             structuralChange = true;
           }

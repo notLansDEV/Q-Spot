@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# LEGACY / UNUSED FOR THE CURRENT Q-SPOT SETUP
+# This script creates the old "Manjaro-Share" hotspot on the NetworkManager
+# interface ap0 (ipv4.method shared). The current Q-Spot hotspot is created by
+# q-spot.sh using the dedicated qspot0 interface + hostapd + dnsmasq and is
+# voucher-gated. Do not use this script while the Q-Spot portal is running.
 set -Eeuo pipefail
 
 UPLINK="wlo1"

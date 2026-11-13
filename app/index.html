@@ -548,7 +548,7 @@
         <footer class="portal-footer">
           <label class="terms-row" for="terms">
             <input id="terms" name="terms" type="checkbox" form="login-form" required />
-            <span>I agree to the <a href="#terms-policy">Terms of Service &amp; Acceptable Use Policy</a></span>
+            <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms of Service &amp; Acceptable Use Policy</a></span>
           </label>
           <p class="help-note">Need help? Contact Front Desk</p>
         </footer>
@@ -591,7 +591,7 @@
           });
           const result = await response.json();
           if (!response.ok) throw new Error(result.error || "Login failed.");
-          window.location.href = result.redirect || "/connected";
+          window.location.href = result.redirect || "/status.html";
         } catch (error) {
           formMessage.textContent = error.message || "Could not connect. Try again.";
         }
@@ -616,7 +616,7 @@
             });
             const outcome = await redeemed.json();
             if (!redeemed.ok) throw new Error(outcome.error || "Voucher could not be redeemed.");
-            window.location.href = outcome.redirect || "/connected";
+            window.location.href = outcome.redirect || "/status.html";
           } else {
             throw new Error("No Q-Spot voucher QR found in that image.");
           }
@@ -638,7 +638,7 @@
         }).then(async response => {
           const result = await response.json();
           if (!response.ok) throw new Error(result.error || "Voucher expired or already used.");
-          window.location.href = result.redirect || "/connected";
+          window.location.href = result.redirect || "/status.html";
         }).catch(error => {
           scanStatus.textContent = error.message;
         });
