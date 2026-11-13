@@ -115,6 +115,15 @@ def masquerade_present():
     return bool(UPLINK and check_rule(
         "nat", "POSTROUTING", ["-s", SUBNET, "-o", UPLINK, "-j", "MASQUERADE"]))
 
+def inbound_ttl_present():
+    """Replies from some shared uplinks arrive with TTL 1; restore a usable TTL."""
+    return bool(UPLINK and check_rule(
+        "mangle", "PREROUTING", ["-i", UPLINK, "-d", SUBNET, "-j", "TTL", "--ttl-set", "64"]))
+
+def outbound_ttl_present():
+    return bool(UPLINK and check_rule(
+        "mangle", "POSTROUTING", ["-s", SUBNET, "-o", UPLINK, "-j", "TTL", "--ttl-set", "64"]))
+
 def portal_bypass_present(ip):
     if os.geteuid() != 0 or not re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", ip):
         return False
@@ -124,7 +133,8 @@ def portal_bypass_present(ip):
 def internet_allowed(ip):
     return (ip_allowed(ip) and portal_bypass_present(ip)
             and ip_forward_enabled() and forwarding_jump_present()
-            and return_rule_present() and masquerade_present())
+            and return_rule_present() and masquerade_present()
+            and inbound_ttl_present() and outbound_ttl_present())
 
 def firewall_details(ip):
     return {
@@ -134,6 +144,8 @@ def firewall_details(ip):
         "forward_jump": forwarding_jump_present(),
         "return_rule": return_rule_present(),
         "masquerade": masquerade_present(),
+        "ttl_repair": inbound_ttl_present(),
+        "ttl_normalize": outbound_ttl_present(),
     }
 
 def _read_int(path):
@@ -141,6 +153,14 @@ def _read_int(path):
         return int(Path(path).read_text().strip())
     except (OSError, ValueError):
         return None
+
+def upstream_ttl():
+    """Report the TTL of replies from the uplink (1 means the uplink mangles it)."""
+    p = run_cmd(["ping", "-c", "1", "-W", "2", "1.1.1.1"])
+    if not p or p.returncode != 0:
+        return None
+    m = re.search(r"ttl=(\d+)", p.stdout or "")
+    return int(m.group(1)) if m else None
 
 def upstream_reachable():
     try:
@@ -176,6 +196,12 @@ def ensure_portal_firewall():
     if not masquerade_present():
         ok = add_rule("nat", "POSTROUTING",
                       ["-s", SUBNET, "-o", UPLINK, "-j", "MASQUERADE"]) and ok
+    if not inbound_ttl_present():
+        ok = add_rule("mangle", "PREROUTING",
+                      ["-i", UPLINK, "-d", SUBNET, "-j", "TTL", "--ttl-set", "64"], 1) and ok
+    if not outbound_ttl_present():
+        ok = add_rule("mangle", "POSTROUTING",
+                      ["-s", SUBNET, "-o", UPLINK, "-j", "TTL", "--ttl-set", "64"]) and ok
     # Keep the portal redirect below per-client RETURN rules so authorized
     # clients are never sent back to the login page.
     if not check_rule("nat", "PREROUTING",
@@ -408,6 +434,9 @@ class Handler(BaseHTTPRequestHandler):
                 "forward_jump": forwarding_jump_present(),
                 "return_rule": return_rule_present(),
                 "masquerade": masquerade_present(),
+                "ttl_repair": inbound_ttl_present(),
+                "ttl_normalize": outbound_ttl_present(),
+                "upstream_ttl": upstream_ttl(),
                 "upstream": upstream_reachable(),
                 "conntrack_count": len(conn_lines),
                 "conntrack_max": _read_int("/proc/sys/net/netfilter/nf_conntrack_max"),
@@ -421,6 +450,8 @@ class Handler(BaseHTTPRequestHandler):
                 "nat_prerouting": rules(["-t", "nat", "-S", "PREROUTING"]),
                 "nat_postrouting": rules(["-t", "nat", "-S", "POSTROUTING"]),
                 "nat_docker": rules(["-t", "nat", "-S", "DOCKER"]),
+                "mangle_prerouting": rules(["-t", "mangle", "-S", "PREROUTING"]),
+                "mangle_postrouting": rules(["-t", "mangle", "-S", "POSTROUTING"]),
             })
         elif path in ("/connected", "/connected.html", "/status", "/status.html"):
             self.send_html(STATUS_FILE.read_text())

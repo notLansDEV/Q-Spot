@@ -52,6 +52,7 @@ The portal camera button opens the phone's native camera/photo capture using the
 
 - This is a prototype for a network you own or are authorized to administer. Get permission before sharing or reselling upstream café internet.
 - AP+station concurrency depends on the Wi-Fi adapter/driver. Some adapters cannot stay connected to upstream Wi-Fi while hosting an AP. If so, use Ethernet for uplink or a second Wi-Fi adapter.
+- Some shared uplinks rewrite the TTL of all replies to 1 to block connection sharing. Locally delivered traffic ignores TTL, so the host still works, but forwarded guest traffic is dropped by the kernel's forward TTL check. Q-Spot restores a normal TTL on the uplink return path (`mangle PREROUTING`) and normalizes it on the way out.
 - Authorization currently follows the client's IPv4 address. DHCP address changes, MAC randomization, and reconnect behavior need additional hardening.
 - HTTPS traffic cannot be transparently redirected. Captive portal auto-popup varies by Android/iOS; manual HTTP portal URL is the fallback.
 - The server currently runs as root because it changes iptables. Do not expose port 8081 on the public internet or café uplink.

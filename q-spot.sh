@@ -510,6 +510,15 @@ setup_firewall() {
 
     # NAT only applies to traffic that passes the voucher-gated FORWARD chain.
     ensure_rule_first nat POSTROUTING -s "$SUBNET" -o "$UPLINK" -j MASQUERADE
+
+    # Some shared uplinks (the café AP here) rewrite the TTL of every reply to
+    # 1 to block connection sharing. Locally delivered packets ignore TTL, so
+    # the host still works, but forwarded replies are dropped by the kernel's
+    # forward TTL check before they ever reach a guest. Restore a normal TTL on
+    # the way in, and normalize it on the way out so forwarded traffic looks
+    # identical to the host's own traffic.
+    ensure_rule_first mangle PREROUTING -i "$UPLINK" -d "$SUBNET" -j TTL --ttl-set 64
+    ensure_rule_first mangle POSTROUTING -s "$SUBNET" -o "$UPLINK" -j TTL --ttl-set 64
 }
 
 remove_firewall() {
@@ -521,6 +530,8 @@ remove_firewall() {
         -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
     delete_rule_all nat PREROUTING -i "$AP_IFACE" -p tcp --dport 80 -j REDIRECT --to-ports "$PORTAL_PORT"
     delete_rule_all nat POSTROUTING -s "$SUBNET" -o "$UPLINK" -j MASQUERADE
+    delete_rule_all mangle PREROUTING -i "$UPLINK" -d "$SUBNET" -j TTL --ttl-set 64
+    delete_rule_all mangle POSTROUTING -s "$SUBNET" -o "$UPLINK" -j TTL --ttl-set 64
 
     iptables -w 5 -F "$FILTER_INPUT_CHAIN" 2>/dev/null || true
     iptables -w 5 -X "$FILTER_INPUT_CHAIN" 2>/dev/null || true
