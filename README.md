@@ -1,5 +1,9 @@
 # Q-Spot --- Wi-Fi Rolling Voucher Portal
 
+<p align="center">
+  <img src="app/images/logo_qspot.png" alt="Q-Spot logo" width="160" />
+</p>
+
 Q-Spot is a lightweight Wi-Fi hotspot and captive portal manager built
 for Manjaro/Arch Linux and NetworkManager. It provisions a virtual
 Access Point (AP) interface, manages NAT/DHCP sharing, issues
