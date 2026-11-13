@@ -13,6 +13,7 @@ GATEWAY = os.environ.get("GATEWAY_IP", "10.42.0.1")
 SUBNET = ".".join(GATEWAY.split(".")[:3]) + ".0/24"
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "")
+ADMIN_PASS_OVERRIDE = None  # runtime admin password override (set by /api/admin/password)
 AP_IFACE = os.environ.get("AP_IFACE", "qspot0")
 UPLINK = os.environ.get("UPLINK", "")
 HTML_FILE = ROOT / "app" / "index.html"
@@ -488,13 +489,15 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
     def do_POST(self):
+        global ADMIN_PASS_OVERRIDE
         path = urlparse(self.path).path
         if path == "/api/login":
             try: data=json_body(self)
             except Exception: return self.send_json({"error":"Invalid request."},400)
             user=str(data.get("username","")).strip()
             pw=str(data.get("password",""))
-            if hmac.compare_digest(user,ADMIN_USER) and hmac.compare_digest(pw,ADMIN_PASS):
+            admin_pass = ADMIN_PASS_OVERRIDE or ADMIN_PASS
+            if hmac.compare_digest(user,ADMIN_USER) and hmac.compare_digest(pw,admin_pass):
                 sid=secrets.token_urlsafe(32); ADMIN_SESSIONS[sid]=time.time()+8*3600
                 return self.send_json({"redirect":"/admin.html"},headers={"Set-Cookie":f"qspot_admin={sid}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800"})
             with db() as c:
@@ -613,6 +616,20 @@ class Handler(BaseHTTPRequestHandler):
                 if part.strip().startswith("qspot_admin="): sid=part.strip().split("=",1)[1]
             ADMIN_SESSIONS.pop(sid,None)
             self.send_json({"ok":True},headers={"Set-Cookie":"qspot_admin=; HttpOnly; Path=/; Max-Age=0"})
+        elif path == "/api/admin/password":
+            if not self.admin_ok(): return self.send_json({"error":"Admin login required."},401)
+            try: data=json_body(self)
+            except Exception: return self.send_json({"error":"Invalid request."},400)
+            current=str(data.get("current",""))
+            new=str(data.get("new",""))
+            confirm=str(data.get("confirm",""))
+            if not current or not new: return self.send_json({"error":"Current and new passwords are required."},400)
+            if new != confirm: return self.send_json({"error":"New passwords do not match."},400)
+            if len(new) < 4: return self.send_json({"error":"New password must be at least 4 characters."},400)
+            if new == current: return self.send_json({"error":"New password must be different."},400)
+            if not hmac.compare_digest(current, ADMIN_PASS_OVERRIDE or ADMIN_PASS): return self.send_json({"error":"Current password is incorrect."},400)
+            ADMIN_PASS_OVERRIDE = new
+            self.send_json({"ok":True})
         elif path == "/api/scan":
             length=int(self.headers.get("Content-Length","0"))
             if length > 8*1024*1024: return self.send_json({"error":"Image is too large."},413)
