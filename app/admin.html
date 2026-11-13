@@ -1170,7 +1170,7 @@
             <span class="stat-label">Total sales</span>
             <div class="stat-value-line">
               <strong class="stat-value" id="total-sales">₱0</strong>
-              <button class="eye-button sales-eye" id="toggle-sales" type="button" aria-label="Hide total sales" aria-pressed="true">
+              <button class="eye-button sales-eye" id="toggle-sales" type="button" aria-label="Show total sales" aria-pressed="false">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" />
                   <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8" />
@@ -1324,7 +1324,7 @@
       const durationNames = { 1: "1 Hour", 24: "1 Day", 48: "2 Days" };
       const prices = { 1: 5, 24: 20, 48: 35 };
       let totalSales = 0;
-      let salesVisible = true;
+      let salesVisible = false; // hidden by default; the eye toggles it
       let selectedDuration = 1;
       let editDuration = 1;
       let editingId = null;
@@ -1687,7 +1687,7 @@
           });
           const qrUrl = voucher.qr ? `/qr/${voucher.qr.split("/").pop()}` : "";
           elements.previewCode.textContent = voucher.username;
-          elements.previewMeta.innerHTML = `Password: <span>${escapeHTML(voucher.password)}</span> · ${escapeHTML(durationLabel(voucher.minutes / 60))}<br><span>Guest Wi-Fi Access</span>`;
+          elements.previewMeta.innerHTML = `Password: <span>${escapeHTML(voucher.password)}</span> · ${escapeHTML(durationLabel(Math.round(voucher.minutes / 60)))}<br><span>Guest Wi-Fi Access</span>`;
           drawServerQr(qrUrl);
           showToast(`${voucher.username} was generated successfully.`);
           await refreshData();
