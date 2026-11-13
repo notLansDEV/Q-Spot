@@ -1690,10 +1690,10 @@
               <div class="admin-avatar">AD</div>
               <div class="admin-identity">
                 <div class="admin-identity-name">Admin Q-Spot</div>
-                <div class="admin-identity-sub">Main Vendo Box</div>
+                <div class="admin-identity-sub"></div>
               </div>
             </button>
-            <div class="menu-dropdown" id="admin-menu" role="menu">
+            <div class="menu-dropdown closed" id="admin-menu" role="menu">
               <button class="menu-item" id="menu-settings" type="button" role="menuitem">
                 <i class="bi bi-gear icon" aria-hidden="true"></i>
                 Settings
@@ -1778,42 +1778,10 @@
                   <option>Last 30 Days</option>
                 </select>
               </div>
-              <div class="chart-container">
-                <div class="bar-column">
-                  <div class="bar" style="--h: 40%"></div>
-                  <span class="bar-label">Mon</span>
-                </div>
-                <div class="bar-column">
-                  <div class="bar" style="--h: 55%"></div>
-                  <span class="bar-label">Tue</span>
-                </div>
-                <div class="bar-column">
-                  <div class="bar" style="--h: 48%"></div>
-                  <span class="bar-label">Wed</span>
-                </div>
-                <div class="bar-column">
-                  <div class="bar" style="--h: 70%"></div>
-                  <span class="bar-label">Thu</span>
-                </div>
-                <div class="bar-column">
-                  <div class="bar" style="--h: 62%"></div>
-                  <span class="bar-label">Fri</span>
-                </div>
-                <div class="bar-column">
-                  <div class="bar" style="--h: 90%"></div>
-                  <span class="bar-label">Sat</span>
-                </div>
-                <div class="bar-column">
-                  <div class="bar" style="--h: 78%"></div>
-                  <span class="bar-label">Sun</span>
-                </div>
-              </div>
+              <div class="chart-container" id="revenue-chart-dashboard"></div>
               <div style="display: flex; justify-content: center; gap: 20px; font-size: 11px; color: var(--muted); margin-top: 12px">
                 <span style="display: flex; align-items: center; gap: 6px">
-                  <span style="width: 8px; height: 8px; background: var(--blue); border-radius: 50%"></span>Coin Collections
-                </span>
-                <span style="display: flex; align-items: center; gap: 6px">
-                  <span style="width: 8px; height: 8px; background: #bae6fd; border-radius: 50%"></span>Voucher Redemptions
+                  <span style="width: 8px; height: 8px; background: var(--blue); border-radius: 50%"></span>Voucher Sales
                 </span>
               </div>
             </section>
@@ -1943,36 +1911,7 @@
                 <option>Last 30 Days</option>
               </select>
             </div>
-            <div class="chart-container">
-              <div class="bar-column">
-                <div class="bar" style="--h: 40%"></div>
-                <span class="bar-label">Mon</span>
-              </div>
-              <div class="bar-column">
-                <div class="bar" style="--h: 55%"></div>
-                <span class="bar-label">Tue</span>
-              </div>
-              <div class="bar-column">
-                <div class="bar" style="--h: 48%"></div>
-                <span class="bar-label">Wed</span>
-              </div>
-              <div class="bar-column">
-                <div class="bar" style="--h: 70%"></div>
-                <span class="bar-label">Thu</span>
-              </div>
-              <div class="bar-column">
-                <div class="bar" style="--h: 62%"></div>
-                <span class="bar-label">Fri</span>
-              </div>
-              <div class="bar-column">
-                <div class="bar" style="--h: 90%"></div>
-                <span class="bar-label">Sat</span>
-              </div>
-              <div class="bar-column">
-                <div class="bar" style="--h: 78%"></div>
-                <span class="bar-label">Sun</span>
-              </div>
-            </div>
+            <div class="chart-container" id="revenue-chart-analytics"></div>
           </section>
         </section>
 
@@ -2411,6 +2350,31 @@
         if (diff === 0) el.classList.add("neutral");
       }
 
+      function renderRevenueCharts() {
+        const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+        const now = new Date();
+        const days = [];
+        for (let i = 6; i >= 0; i -= 1) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          const start = d.getTime();
+          const end = start + 86400000;
+          const amount = users
+            .filter((user) => user.used && user.createdAt >= start && user.createdAt < end)
+            .reduce((sum, user) => sum + priceFor(user.minutes), 0);
+          days.push({ label: dayNames[d.getDay()], amount });
+        }
+        const max = Math.max(1, ...days.map((d) => d.amount));
+        const html = days.map((d) => {
+          const h = d.amount <= 0 ? 4 : Math.max(6, Math.round((d.amount / max) * 100));
+          const title = `₱${d.amount.toLocaleString()}`;
+          return `<div class="bar-column"><div class="bar" style="--h: ${h}%" title="${title}"></div><span class="bar-label">${d.label}</span></div>`;
+        }).join("");
+        ["revenue-chart-dashboard","revenue-chart-analytics"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = html;
+        });
+      }
+
       function updateSummary() {
         const active = users.filter((user) => user.status === "active" && (!user.expiresAt || user.expiresAt > Date.now())).length;
         totalSales = users.filter((user) => user.used).reduce((sum, user) => sum + priceFor(user.minutes), 0);
@@ -2423,6 +2387,7 @@
         if (elements.statTime) elements.statTime.textContent = `${Math.max(0, Math.round(soldMinutes / 60))} hrs`;
         updateSales();
         updateSalesChange();
+        renderRevenueCharts();
       }
 
       function updateSales() {
@@ -2762,6 +2727,7 @@
       const menuTrigger = elements.menuTrigger;
       const menu = document.getElementById("admin-menu");
       let menuOpen = false;
+      menu.classList.add("closed");
 
       function closeMenu() {
         menuOpen = false;
