@@ -1587,7 +1587,8 @@
         }
 
         .qr-inner {
-          max-width: 330px;
+          max-width: 360px;
+          padding: 0 8px;
         }
       }
 
@@ -1631,11 +1632,64 @@
           padding: 20px 16px;
         }
 
-
-
         .live-badge {
           flex: 1;
           justify-content: center;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .generator-form {
+          padding: 20px 16px 22px;
+        }
+
+        .input-action {
+          flex-direction: column;
+        }
+
+        .input-action .auto-button {
+          width: 100%;
+        }
+
+        .duration-pills,
+        .modal-pills {
+          gap: 6px;
+        }
+
+        .duration-pill {
+          flex: 1 1 calc(50% - 6px);
+          justify-content: center;
+          text-align: center;
+          padding: 0 10px;
+        }
+
+        .custom-time {
+          flex-wrap: wrap;
+        }
+
+        .custom-time input {
+          max-width: 100%;
+          flex: 1 1 120px;
+        }
+
+        #admin-password-form.form-grid {
+          grid-template-columns: 1fr !important;
+          padding: 16px !important;
+        }
+
+        .section-card-head {
+          padding: 16px;
+        }
+
+        .qr-actions {
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+
+        .qr-inner {
+          max-width: 100%;
         }
       }
 
@@ -1646,6 +1700,60 @@
           transition-duration: 0.01ms !important;
           animation-duration: 0.01ms !important;
           animation-iteration-count: 1 !important;
+        }
+      }
+      #print-area {
+        display: none;
+      }
+
+      @media print {
+        body * {
+          visibility: hidden !important;
+        }
+        #print-area,
+        #print-area * {
+          visibility: visible !important;
+        }
+        #print-area {
+          display: flex !important;
+          position: fixed;
+          inset: 0;
+          align-items: center;
+          justify-content: center;
+          background: #fff;
+        }
+        #print-area .print-card {
+          text-align: center;
+          padding: 16px;
+        }
+        #print-area .qr {
+          width: 320px;
+          height: 320px;
+          max-width: 100%;
+          image-rendering: pixelated;
+        }
+        #print-area .label {
+          margin: 10px 0 2px;
+          color: #475569;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+        }
+        #print-area .code {
+          margin: 4px 0 4px;
+          font-size: 30px;
+          font-weight: 800;
+          letter-spacing: .08em;
+          color: #0f172a;
+        }
+        #print-area .pw {
+          margin: 0;
+          font-size: 22px;
+          font-weight: 700;
+          color: #0f172a;
+        }
+        @page {
+          margin: 12mm;
         }
       }
     </style>
@@ -1899,11 +2007,14 @@
             </div>
             <aside class="qr-preview" aria-label="Generated QR voucher preview">
               <div class="qr-inner">
-                <div class="preview-label-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-bottom:16px;">
-                  <div class="preview-label" style="margin:0;">QR preview</div>
-                  <button class="secondary-button icon-only-button" id="open-qr-tab" type="button" title="Open in new tab" aria-label="Open in new tab">
-                    <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
-                  </button>
+                <div class="preview-label-row" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%;margin-bottom:16px;">
+                  <span aria-hidden="true"></span>
+                  <div class="preview-label" style="margin:0;text-align:center;">QR preview</div>
+                  <div style="display:flex;justify-content:flex-end;">
+                    <button class="secondary-button icon-only-button" id="open-qr-tab" type="button" title="Open in new tab" aria-label="Open in new tab">
+                      <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                    </button>
+                  </div>
                 </div>
                 <div class="qr-box">
                   <canvas id="qr-canvas" width="264" height="264" aria-label="Voucher QR pattern"></canvas>
@@ -2068,6 +2179,16 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div id="print-area" aria-hidden="true">
+      <div class="print-card">
+        <img id="print-qr-img" class="qr" alt="QR code" />
+        <div class="label">Voucher Code</div>
+        <div id="print-code" class="code"></div>
+        <div class="label">Password</div>
+        <div id="print-password" class="pw"></div>
+      </div>
+    </div>
 
     <svg width="0" height="0" style="position: absolute; display: none;">
       <symbol id="i-grid" viewBox="0 0 24 24">
@@ -2783,35 +2904,18 @@
         let password = "";
         const m = metaText.match(/Password:\s*([^\s·]+)/i);
         if (m) password = m[1];
-        const safeCode = escapeHTML(code);
-        const safePassword = escapeHTML(password || "—");
-        const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Q-Spot Hotspot</title>
-<style>
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#fff;color:#0f172a;display:flex;align-items:center;justify-content:center;min-height:100vh}
-  .print-card{text-align:center;padding:16px}
-  .qr{width:320px;height:320px;max-width:100%;image-rendering:pixelated}
-  .code{margin:14px 0 4px;font-size:30px;font-weight:800;letter-spacing:.08em}
-  .pw{margin:0;font-size:22px;font-weight:700}
-  .label{margin:10px 0 2px;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
-  @page{margin:12mm}
-</style></head><body>
-  <div class="print-card">
-    <img class="qr" src="${qrDataUrl}" alt="QR code for ${safeCode}" />
-    <div class="label">Voucher Code</div>
-    <div class="code">${safeCode}</div>
-    <div class="label">Password</div>
-    <div class="pw">${safePassword}</div>
-  </div>
-  <script>window.onload=function(){setTimeout(function(){window.focus();window.print();},150);};window.onafterprint=function(){window.close();};<\/script>
-</body></html>`;
-        const win = window.open("", "_blank");
-        if (!win) {
-          showToast("Pop-up blocked. Allow pop-ups to print the QR code.");
-          return;
-        }
-        win.document.open();
-        win.document.write(html);
-        win.document.close();
+        const qrImg = document.getElementById("print-qr-img");
+        const codeEl = document.getElementById("print-code");
+        const passEl = document.getElementById("print-password");
+        if (qrImg) qrImg.src = qrDataUrl;
+        if (codeEl) codeEl.textContent = code;
+        if (passEl) passEl.textContent = password || "—";
+        const prevTitle = document.title;
+        document.title = "Q-Spot Hotspot";
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => { document.title = prevTitle; }, 500);
+        }, 50);
       }
 
       document.getElementById("print-qr").addEventListener("click", printVoucherQr);
