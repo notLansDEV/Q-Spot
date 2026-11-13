@@ -318,6 +318,11 @@
         color: var(--ink);
       }
 
+      .table-search {
+        width: 280px;
+        max-width: 100%;
+      }
+
       .topbar-actions {
         display: flex;
         align-items: center;
@@ -787,6 +792,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 16px;
+        flex-wrap: wrap;
       }
 
       .table-tools {
@@ -1387,6 +1393,10 @@
         width: min(100%, 590px);
       }
 
+      #qr-backdrop.modal-backdrop {
+        z-index: 3000;
+      }
+
       .large-qr-content {
         padding: 28px 28px 30px;
         background:
@@ -1437,7 +1447,7 @@
       /* Modal */
       .modal-backdrop {
         position: fixed;
-        z-index: 20;
+        z-index: 1000;
         inset: 0;
         display: none;
         align-items: center;
@@ -1602,9 +1612,7 @@
           padding: 20px 16px;
         }
 
-        .topbar .search-box {
-          flex: 1;
-        }
+
 
         .live-badge {
           flex: 1;
@@ -1674,10 +1682,7 @@
         <button class="icon-btn mobile-toggle" id="menuToggle" aria-label="Toggle Menu" type="button">
           <i class="bi bi-list icon" aria-hidden="true"></i>
         </button>
-        <div class="search-box">
-          <i class="bi bi-search icon" style="color: var(--muted); width: 16px; height: 16px" aria-hidden="true"></i>
-          <input type="text" id="table-search" placeholder="Search IP, MAC, or Voucher..." />
-        </div>
+
         <div class="topbar-actions">
           <div class="live-badge" aria-live="polite">
             <span class="live-dot" aria-hidden="true"></span>
@@ -1803,6 +1808,10 @@
                 <h2 id="users-title">Vouchers</h2>
                 <p class="section-note">Manage credentials, connection status, and assigned time.</p>
               </div>
+              <div class="search-box table-search">
+                <i class="bi bi-search icon" style="color: var(--muted); width: 16px; height: 16px" aria-hidden="true"></i>
+                <input type="text" id="table-search" placeholder="Search voucher, password, device, or status..." />
+              </div>
             </div>
             <div class="table-wrap">
               <table>
@@ -1871,7 +1880,13 @@
             </div>
             <aside class="qr-preview" aria-label="Generated QR voucher preview">
               <div class="qr-inner">
-                <div class="preview-label">QR preview</div>
+                <div class="preview-label-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-bottom:16px;">
+                  <div class="preview-label" style="margin:0;">QR preview</div>
+                  <button class="secondary-button qr-action-button" id="open-qr-tab" type="button" style="min-height:34px;padding:0 12px;font-size:0.75rem;">
+                    <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                    Open in new tab
+                  </button>
+                </div>
                 <div class="qr-box">
                   <canvas id="qr-canvas" width="264" height="264" aria-label="Voucher QR pattern"></canvas>
                 </div>
@@ -2196,6 +2211,7 @@
         largePreviewCode: document.getElementById("large-preview-code"),
         largePreviewMeta: document.getElementById("large-preview-meta"),
         largeQrBackdrop: document.getElementById("qr-backdrop"),
+        openQrTab: document.getElementById("open-qr-tab"),
         toggleSales: document.getElementById("toggle-sales"),
         toast: document.getElementById("toast"),
         adminLogout: document.getElementById("admin-logout"),
@@ -2535,6 +2551,50 @@
         document.body.style.overflow = "";
       }
 
+      function openQrInNewTab() {
+        const code = (elements.previewCode.textContent || "").trim();
+        if (!code || /ready to generate/i.test(code)) {
+          showToast("Generate a voucher first to open its QR card.");
+          return;
+        }
+        const qrDataUrl = elements.canvas.toDataURL("image/png");
+        const metaText = (elements.previewMeta.innerText || "").replace(/\s+/g, " ").trim();
+        const logoUrl = new URL("/images/logo_qspot.png", window.location.origin).href;
+        const safeCode = escapeHTML(code);
+        const safeMeta = escapeHTML(metaText);
+        const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Q-Spot Voucher ${safeCode}</title>
+<style>
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f8fafc;color:#0f172a;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 20px 50px rgba(15,23,42,.12);padding:28px;max-width:420px;width:100%;text-align:center}
+  .logo{width:72px;height:72px;object-fit:contain;border-radius:16px;margin:0 auto 12px;display:block}
+  h1{margin:0 0 4px;font-size:22px;letter-spacing:-.02em}
+  .sub{margin:0 0 18px;color:#64748b;font-size:13px}
+  .qr{width:280px;height:280px;max-width:100%;image-rendering:pixelated;border:1px solid #e2e8f0;border-radius:16px;padding:12px;background:#fff}
+  .code{margin:16px 0 6px;font-size:28px;font-weight:800;letter-spacing:.08em}
+  .meta{margin:0;color:#334155;font-size:14px;line-height:1.6;white-space:pre-line}
+  .foot{margin-top:18px;padding-top:14px;border-top:1px dashed #e2e8f0;color:#64748b;font-size:12px}
+  @media print{body{background:#fff;padding:0}.card{box-shadow:none;border:0}}
+</style></head><body>
+<div class="card">
+  <img class="logo" src="${logoUrl}" alt="Q-Spot logo" />
+  <h1>Q-Spot Wi-Fi</h1>
+  <p class="sub">Guest Access Voucher</p>
+  <img class="qr" src="${qrDataUrl}" alt="QR code for ${safeCode}" />
+  <div class="code">${safeCode}</div>
+  <p class="meta">${safeMeta}</p>
+  <div class="foot">Scan the QR code or sign in with the voucher code and password.</div>
+</div>
+</body></html>`;
+        const win = window.open("", "_blank");
+        if (!win) {
+          showToast("Pop-up blocked. Allow pop-ups to open the QR in a new tab.");
+          return;
+        }
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+      }
+
       function syncLargeQrPreview() {
         const context = elements.largeCanvas.getContext("2d");
         context.imageSmoothingEnabled = false;
@@ -2689,6 +2749,7 @@
         salesVisible = !salesVisible;
         updateSales();
       });
+      if (elements.openQrTab) elements.openQrTab.addEventListener("click", openQrInNewTab);
       document.getElementById("large-qr-preview").addEventListener("click", () => {
         syncLargeQrPreview();
         openModal(elements.largeQrBackdrop);
