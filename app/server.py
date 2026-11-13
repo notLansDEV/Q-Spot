@@ -18,6 +18,7 @@ UPLINK = os.environ.get("UPLINK", "")
 HTML_FILE = ROOT / "app" / "index.html"
 STATUS_FILE = ROOT / "app" / "status.html"
 ADMIN_FILE = ROOT / "app" / "admin.html"
+LOGO_FILE = ROOT / "app" / "images" / "logo_qspot.png"
 TERMS_FILE = ROOT / "app" / "Terms_&_Privacy.html"
 ADMIN_SESSIONS = {}
 BYPASS_COMMENT = "qspot-client"
@@ -472,6 +473,15 @@ class Handler(BaseHTTPRequestHandler):
             p = QR_DIR / name
             if not p.exists(): return self.send_json({"error":"Not found"},404)
             raw=p.read_bytes(); self.send_response(200); self.send_header("Content-Type","image/png"); self.send_header("Content-Length",str(len(raw))); self.end_headers(); self.wfile.write(raw)
+        elif path == "/images/logo_qspot.png":
+            logo = LOGO_FILE
+            if not logo.exists(): return self.send_json({"error":"Not found"},404)
+            logo_bytes = logo.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type","image/png")
+            self.send_header("Content-Length",str(len(logo_bytes)))
+            self.end_headers()
+            self.wfile.write(logo_bytes)
         else:
             self.send_response(302)
             self.send_header("Location", f"http://{GATEWAY}:{PORT}/")

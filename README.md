@@ -1,5 +1,9 @@
 # Q-Spot — Wi-Fi rolling voucher portal (Manjaro / NetworkManager)
 
+<p align="center">
+  <img src="app/images/logo_qspot.png" alt="Q-Spot logo" width="160" />
+</p>
+
 Q-Spot replaces the previous hotspot launcher: it creates its own AP interface, runs DHCP/DNS and NAT, starts the captive portal, issues QR vouchers, and expires sessions automatically.
 
 ## Run
