@@ -789,6 +789,7 @@
         align-items: center;
         gap: 10px;
         flex-wrap: wrap;
+        margin-right: 12px;
       }
 
       .view-toggle {
@@ -898,6 +899,86 @@
         height: 240px;
       }
 
+      .analytics-chart.calendar-mode {
+        height: auto;
+        min-height: 240px;
+        display: block;
+        padding-top: 8px;
+        border-bottom: 0;
+      }
+
+      .month-calendar {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .month-cal-head {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted);
+        padding: 4px 0;
+      }
+
+      .month-cell {
+        min-height: 86px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 8px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .month-cell.empty {
+        background: #f8fafc;
+        border-style: dashed;
+      }
+
+      .month-cell.selected {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+      }
+
+      .month-day {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .month-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .plan-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      .plan-badge.b1h { background: #2563eb; }
+      .plan-badge.b1d { background: #10b981; }
+      .plan-badge.b2d { background: #f59e0b; }
+
+      .month-total {
+        margin-top: auto;
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+
       .stacked-bar {
         width: 100%;
         max-width: 36px;
@@ -929,6 +1010,41 @@
         }
         .analytics-controls {
           width: 100%;
+          margin-right: 0;
+          justify-content: flex-start;
+        }
+        .analytics-date {
+          margin-left: 0;
+        }
+        .month-cell {
+          min-height: 64px;
+          padding: 6px;
+        }
+        .month-total {
+          display: none;
+        }
+        .analytics-chart {
+          height: 220px;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .month-calendar {
+          gap: 4px;
+        }
+        .month-cell {
+          min-height: 54px;
+          padding: 4px;
+          border-radius: 8px;
+        }
+        .month-cal-head {
+          font-size: 10px;
+        }
+        .plan-badge {
+          min-width: 16px;
+          height: 16px;
+          font-size: 9px;
+          padding: 0 4px;
         }
       }
 
@@ -2227,7 +2343,7 @@
               <div class="summary-chip"><span class="summary-dot swatch-1h"></span><strong id="count-1h">0</strong><span>1 Hour</span></div>
               <div class="summary-chip"><span class="summary-dot swatch-1d"></span><strong id="count-1d">0</strong><span>1 Day</span></div>
               <div class="summary-chip"><span class="summary-dot swatch-2d"></span><strong id="count-2d">0</strong><span>2 Days</span></div>
-              <div class="summary-chip summary-total"><strong id="count-total">0</strong><span>Total vouchers (selected day)</span></div>
+              <div class="summary-chip summary-total"><strong id="count-total">0</strong><span id="count-total-label">Total vouchers (selected day)</span></div>
             </div>
 
             <div class="chart-container analytics-chart" id="revenue-chart-analytics"></div>
@@ -2585,7 +2701,8 @@
         count1h: document.getElementById("count-1h"),
         count1d: document.getElementById("count-1d"),
         count2d: document.getElementById("count-2d"),
-        countTotal: document.getElementById("count-total")
+        countTotal: document.getElementById("count-total"),
+        countTotalLabel: document.getElementById("count-total-label")
       };
 
       function escapeHTML(value) {
@@ -2788,72 +2905,125 @@
       function renderAnalyticsChart() {
         const container = document.getElementById("revenue-chart-analytics");
         if (!container) return;
-        const selected = new Date(analyticsState.date + "T00:00:00");
-        if (Number.isNaN(selected.getTime())) return;
-        let periods = [];
+        const now = new Date();
+        const todayStr = now.toISOString().slice(0, 10);
+        let selected = new Date(analyticsState.date + "T00:00:00");
+        if (Number.isNaN(selected.getTime())) selected = new Date(todayStr + "T00:00:00");
+
+        // Enforce view-specific dates
+        if (analyticsState.view === "day") {
+          analyticsState.date = todayStr;
+          selected = new Date(todayStr + "T00:00:00");
+          if (elements.analyticsDate) { elements.analyticsDate.value = analyticsState.date; elements.analyticsDate.disabled = true; }
+        } else if (analyticsState.view === "week") {
+          const base = new Date(todayStr + "T00:00:00");
+          const day = base.getDay();
+          const diff = (day + 6) % 7;
+          base.setDate(base.getDate() - diff);
+          analyticsState.date = base.toISOString().slice(0, 10);
+          selected = base;
+          if (elements.analyticsDate) { elements.analyticsDate.value = analyticsState.date; elements.analyticsDate.disabled = true; }
+        } else {
+          if (elements.analyticsDate) elements.analyticsDate.disabled = false;
+        }
+
         let note = "";
         let subtitle = "";
+        container.classList.remove("calendar-mode");
 
         if (analyticsState.view === "day") {
+          const periods = [];
           for (let h = 0; h < 24; h += 1) {
             const start = new Date(selected); start.setHours(h, 0, 0, 0);
             const end = new Date(selected); end.setHours(h + 1, 0, 0, 0);
             periods.push({ label: `${h}`, start: start.getTime(), end: end.getTime() });
           }
-          subtitle = `Hourly sales by plan for ${selected.toLocaleDateString()}`;
-          note = "Bars show voucher sales per hour for the selected day, color-coded by plan (1 Hour / 1 Day / 2 Days).";
+          subtitle = `Today (${selected.toLocaleDateString()}) — hourly sales by plan`;
+          note = "Showing the current day (today). Bars are color-coded by plan (1 Hour / 1 Day / 2 Days).";
+          const periodData = periods.map((p) => {
+            const list = vouchersInRange(p.start, p.end);
+            const byPlan = { "1h": 0, "1d": 0, "2d": 0 };
+            list.forEach((user) => { const b = planBucket(user.minutes); if (byPlan[b] !== undefined) byPlan[b] += priceFor(user.minutes); });
+            const total = byPlan["1h"] + byPlan["1d"] + byPlan["2d"];
+            return { ...p, byPlan, total, counts: planCounts(list) };
+          });
+          const max = Math.max(1, ...periodData.map((p) => p.total));
+          container.innerHTML = periodData.map((p) => {
+            const hPct = p.total <= 0 ? 4 : Math.max(6, Math.round((p.total / max) * 100));
+            const seg = (key, cls) => { const val = p.byPlan[key]; if (val <= 0) return ""; const sh = (val / (p.total || 1)) * 100; return `<span class="seg ${cls}" style="height:${sh}%" title="${key === "1h" ? "1 Hour" : key === "1d" ? "1 Day" : "2 Days"}: ₱${val.toLocaleString()}"></span>`; };
+            const title = `1h: ${p.counts["1h"]} (₱${p.byPlan["1h"]}) · 1d: ${p.counts["1d"]} (₱${p.byPlan["1d"]}) · 2d: ${p.counts["2d"]} (₱${p.byPlan["2d"]})`;
+            return `<div class="bar-column" title="${escapeHTML(title)}"><div class="stacked-bar" style="--h:${hPct}%">${seg("1h","seg-1h")}${seg("1d","seg-1d")}${seg("2d","seg-2d")}</div><span class="bar-label">${escapeHTML(p.label)}</span></div>`;
+          }).join("");
         } else if (analyticsState.view === "week") {
           const day = selected.getDay();
-          const diff = (day + 6) % 7; // Monday start
+          const diff = (day + 6) % 7;
           const monday = new Date(selected);
           monday.setDate(selected.getDate() - diff);
           const names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+          const periods = [];
           for (let i = 0; i < 7; i += 1) {
             const d = new Date(monday); d.setDate(monday.getDate() + i);
             const start = startOfDay(d).getTime();
-            periods.push({ label: names[i], start, end: start + 86400000 });
+            periods.push({ label: names[i], start, end: start + 86400000, date: d });
           }
           const endWeek = new Date(monday); endWeek.setDate(monday.getDate() + 6);
-          subtitle = `Daily sales by plan for week of ${monday.toLocaleDateString()} - ${endWeek.toLocaleDateString()}`;
-          note = "Bars show voucher sales per day for the selected week, color-coded by plan.";
+          subtitle = `Current week (${monday.toLocaleDateString()} - ${endWeek.toLocaleDateString()})`;
+          note = "Showing the current week (Mon–Sun). Bars are color-coded by plan.";
+          const periodData = periods.map((p) => {
+            const list = vouchersInRange(p.start, p.end);
+            const byPlan = { "1h": 0, "1d": 0, "2d": 0 };
+            list.forEach((user) => { const b = planBucket(user.minutes); if (byPlan[b] !== undefined) byPlan[b] += priceFor(user.minutes); });
+            const total = byPlan["1h"] + byPlan["1d"] + byPlan["2d"];
+            return { ...p, byPlan, total, counts: planCounts(list) };
+          });
+          const max = Math.max(1, ...periodData.map((p) => p.total));
+          container.innerHTML = periodData.map((p) => {
+            const hPct = p.total <= 0 ? 4 : Math.max(6, Math.round((p.total / max) * 100));
+            const seg = (key, cls) => { const val = p.byPlan[key]; if (val <= 0) return ""; const sh = (val / (p.total || 1)) * 100; return `<span class="seg ${cls}" style="height:${sh}%" title="${key === "1h" ? "1 Hour" : key === "1d" ? "1 Day" : "2 Days"}: ₱${val.toLocaleString()}"></span>`; };
+            const title = `${p.date.toLocaleDateString()} — 1h: ${p.counts["1h"]} · 1d: ${p.counts["1d"]} · 2d: ${p.counts["2d"]}`;
+            return `<div class="bar-column" title="${escapeHTML(title)}"><div class="stacked-bar" style="--h:${hPct}%">${seg("1h","seg-1h")}${seg("1d","seg-1d")}${seg("2d","seg-2d")}</div><span class="bar-label">${escapeHTML(p.label)}</span></div>`;
+          }).join("");
         } else {
+          container.classList.add("calendar-mode");
           const first = new Date(selected.getFullYear(), selected.getMonth(), 1);
           const last = new Date(selected.getFullYear(), selected.getMonth() + 1, 0);
+          subtitle = `Monthly calendar — ${first.toLocaleString(undefined, { month: "long", year: "numeric" })}`;
+          note = "Showing the whole month in calendar view. Colored badges show counts per plan for each day (1 Hour / 1 Day / 2 Days).";
+          const heads = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d) => `<div class="month-cal-head">${d}</div>`).join("");
+          let offset = (first.getDay() + 6) % 7; // Monday start
+          let cells = "";
+          for (let i = 0; i < offset; i += 1) cells += `<div class="month-cell empty"></div>`;
           for (let d = 1; d <= last.getDate(); d += 1) {
             const dayDate = new Date(selected.getFullYear(), selected.getMonth(), d);
             const start = startOfDay(dayDate).getTime();
-            periods.push({ label: String(d), start, end: start + 86400000 });
+            const counts = planCounts(vouchersInRange(start, start + 86400000));
+            const isSelected = dayDate.toISOString().slice(0,10) === analyticsState.date;
+            const badges = [
+              counts["1h"] ? `<span class="plan-badge b1h" title="1 Hour">${counts["1h"]}</span>` : "",
+              counts["1d"] ? `<span class="plan-badge b1d" title="1 Day">${counts["1d"]}</span>` : "",
+              counts["2d"] ? `<span class="plan-badge b2d" title="2 Days">${counts["2d"]}</span>` : ""
+            ].join("");
+            cells += `<div class="month-cell${isSelected ? " selected" : ""}" data-day="${dayDate.toISOString().slice(0,10)}" title="${dayDate.toLocaleDateString()} — 1h: ${counts["1h"]}, 1d: ${counts["1d"]}, 2d: ${counts["2d"]}">
+              <div class="month-day">${d}</div>
+              <div class="month-badges">${badges || ""}</div>
+              <div class="month-total">${counts.total ? counts.total + " voucher" + (counts.total===1?"":"s") : ""}</div>
+            </div>`;
           }
-          subtitle = `Daily sales by plan for ${first.toLocaleString(undefined, { month: "long", year: "numeric" })}`;
-          note = "Bars show voucher sales per day for the selected month, color-coded by plan.";
+          container.innerHTML = `<div class="month-calendar">${heads}${cells}</div>`;
+          // click to select day for summary counts
+          container.querySelectorAll(".month-cell[data-day]").forEach((cell) => {
+            cell.style.cursor = "pointer";
+            cell.addEventListener("click", () => {
+              analyticsState.date = cell.dataset.day;
+              if (elements.analyticsDate) elements.analyticsDate.value = analyticsState.date;
+              renderAnalyticsChart();
+            });
+          });
         }
 
-        const periodData = periods.map((p) => {
-          const list = vouchersInRange(p.start, p.end);
-          const byPlan = { "1h": 0, "1d": 0, "2d": 0 };
-          list.forEach((user) => {
-            const b = planBucket(user.minutes);
-            if (byPlan[b] !== undefined) byPlan[b] += priceFor(user.minutes);
-          });
-          const total = byPlan["1h"] + byPlan["1d"] + byPlan["2d"];
-          return { ...p, byPlan, total, counts: planCounts(list) };
-        });
-
-        const max = Math.max(1, ...periodData.map((p) => p.total));
-        container.innerHTML = periodData.map((p) => {
-          const hPct = p.total <= 0 ? 4 : Math.max(6, Math.round((p.total / max) * 100));
-          const seg = (key, cls) => {
-            const val = p.byPlan[key];
-            if (val <= 0) return "";
-            const sh = (val / (p.total || 1)) * 100;
-            return `<span class="seg ${cls}" style="height:${sh}%" title="${key === "1h" ? "1 Hour" : key === "1d" ? "1 Day" : "2 Days"}: ₱${val.toLocaleString()}"></span>`;
-          };
-          const title = `1h: ${p.counts["1h"]} (₱${p.byPlan["1h"]}) · 1d: ${p.counts["1d"]} (₱${p.byPlan["1d"]}) · 2d: ${p.counts["2d"]} (₱${p.byPlan["2d"]})`;
-          return `<div class="bar-column" title="${escapeHTML(title)}"><div class="stacked-bar" style="--h:${hPct}%">${seg("1h","seg-1h")}${seg("1d","seg-1d")}${seg("2d","seg-2d")}</div><span class="bar-label">${escapeHTML(p.label)}</span></div>`;
-        }).join("");
-
-        // Selected day counts (always for analyticsState.date)
-        const dayStart = startOfDay(selected).getTime();
+        // Selected day counts (for analyticsState.date)
+        const countDate = new Date(analyticsState.date + "T00:00:00");
+        const dayStart = startOfDay(Number.isNaN(countDate.getTime()) ? selected : countDate).getTime();
         const dayCounts = planCounts(vouchersInRange(dayStart, dayStart + 86400000));
         if (elements.count1h) elements.count1h.textContent = dayCounts["1h"];
         if (elements.count1d) elements.count1d.textContent = dayCounts["1d"];
@@ -3350,11 +3520,18 @@
 
 
       // Analytics controls
+      function syncAnalyticsSummaryLabel() {
+        if (!elements.countTotalLabel) return;
+        if (analyticsState.view === "day") elements.countTotalLabel.textContent = "Total vouchers (today)";
+        else if (analyticsState.view === "week") elements.countTotalLabel.textContent = "Total vouchers (selected day)";
+        else elements.countTotalLabel.textContent = "Total vouchers (selected day)";
+      }
       if (elements.analyticsDate) {
         elements.analyticsDate.value = analyticsState.date;
         elements.analyticsDate.addEventListener("change", (event) => {
           if (event.target.value) {
             analyticsState.date = event.target.value;
+            syncAnalyticsSummaryLabel();
             renderAnalyticsChart();
           }
         });
@@ -3363,10 +3540,17 @@
         btn.classList.toggle("active", btn.dataset.view === analyticsState.view);
         btn.addEventListener("click", () => {
           analyticsState.view = btn.dataset.view;
+          if (analyticsState.view === "month" && elements.analyticsDate) {
+            // default to current month context but keep selectable
+            const now = new Date();
+            if (!analyticsState.date) analyticsState.date = now.toISOString().slice(0,10);
+          }
           document.querySelectorAll(".view-btn[data-view]").forEach((b) => b.classList.toggle("active", b === btn));
+          syncAnalyticsSummaryLabel();
           renderAnalyticsChart();
         });
       });
+      syncAnalyticsSummaryLabel();
 
       elements.exportBtn.addEventListener("click", () => exportLogs());
 
