@@ -3,29 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#eef3f9" />
-    <title>Wi-Fi Admin Control Panel</title>
+    <meta name="theme-color" content="#0d1522" />
+    <title>Q-Spot</title>
+    <link rel="icon" type="image/png" href="/images/logo_qspot.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+
       :root {
-        color-scheme: light;
-        --ink: #17223b;
-        --muted: #667085;
-        --soft: #8a94a6;
-        --line: #e3e8f1;
-        --canvas: #edf2f8;
-        --card: #ffffff;
+        --navy: #0d1522;
+        --navy-dark: #090e17;
+        --blue: #2563eb;
+        --blue-hover: #1d4ed8;
+        --green: #10b981;
+        --amber: #f59e0b;
+        --red: #ef4444;
+        --ink: #1e293b;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --surface: #ffffff;
+        --canvas: #f8fafc;
         --field: #f8faff;
-        --primary: #2858d6;
-        --primary-dark: #1946bb;
-        --primary-soft: #eaf0ff;
-        --success: #087e6c;
-        --success-soft: #e6f7f3;
-        --warning: #9a6700;
-        --warning-soft: #fff5d8;
-        --danger: #c13b4d;
-        --danger-soft: #ffedf0;
-        --shadow: 0 16px 42px rgba(37, 57, 95, 0.08);
-        --focus: rgba(40, 88, 214, 0.18);
+        --radius: 12px;
       }
 
       * {
@@ -41,10 +40,8 @@
         min-height: 100vh;
         margin: 0;
         color: var(--ink);
-        background:
-          radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.9), transparent 28%),
-          var(--canvas);
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--canvas);
+        font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         -webkit-font-smoothing: antialiased;
       }
 
@@ -68,74 +65,269 @@
 
       button {
         cursor: pointer;
+        border: none;
+        background: none;
       }
 
       button:focus-visible,
       input:focus-visible,
       select:focus-visible,
       a:focus-visible {
-        outline: 3px solid var(--focus);
+        outline: 3px solid rgba(37, 99, 235, 0.35);
         outline-offset: 2px;
       }
 
-      .app-shell {
-        width: min(100% - 40px, 1240px);
-        margin: 0 auto;
-        padding: 28px 0 42px;
+      [hidden] {
+        display: none !important;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 50;
+        width: 260px;
+        background: var(--navy);
+        color: #94a3b8;
+        display: flex;
+        flex-direction: column;
+        padding: 24px 16px;
+        transition: transform 0.25s ease;
+      }
+
+      .sidebar .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 8px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .brand-logo {
+        display: grid;
+        flex: 0 0 auto;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: transparent;
+        color: #fff;
+        place-items: center;
+        box-shadow: none;
+        overflow: hidden;
+      }
+
+      .brand-logo img {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: block;
+        object-fit: contain;
+      }
+
+      .brand-logo svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .brand h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.01em;
+      }
+
+      .brand p {
+        margin: 2px 0 0;
+        font-size: 10px;
+        font-weight: 600;
+        color: #64748b;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+
+      .nav-group-label {
+        margin: 24px 8px 10px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #475569;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .nav-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      i.icon.bi, .bi.icon {
+        font-size: 18px;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 11px 12px;
+        border-radius: 8px;
+        color: #94a3b8;
+        font-size: 13px;
+        font-weight: 500;
+        text-align: left;
+        transition: 0.15s;
+      }
+
+      .nav-link .icon,
+      .nav-link svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        color: #ffffff;
+      }
+
+      .nav-link i.bi {
+        color: #ffffff;
+        font-size: 18px;
+      }
+
+      .nav-link svg * {
+        stroke: currentColor;
+      }
+
+      .nav-link:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .nav-link.active {
+        color: #fff;
+        background: var(--blue);
+        font-weight: 600;
+      }
+
+      .sidebar .icon {
+        color: #ffffff;
+      }
+
+      .sidebar .icon * {
+        stroke: currentColor;
+      }
+
+      .sidebar .icon rect {
+        fill: currentColor;
+        stroke: none;
+      }
+
+      .sidebar i.bi {
+        color: #ffffff;
+      }
+
+      .sidebar-footer {
+        margin-top: auto;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .hardware-widget {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 11px;
+      }
+
+      .HW-status-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #cbd5e1;
+        font-weight: 500;
+      }
+
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+        display: inline-block;
+        margin-right: 6px;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+      }
+
+      .sidebar-footer .hw-storage {
+        margin-top: 8px;
+        color: #64748b;
+        font-size: 10px;
+      }
+
+      /* Main / topbar */
+      .main {
+        margin-left: 260px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
       }
 
       .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        min-height: 68px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 22px;
-        margin-bottom: 24px;
+        padding: 0 32px;
       }
 
-      .brand {
+      .search-box {
         display: flex;
         align-items: center;
-        min-width: 0;
-        gap: 13px;
-      }
-
-      .brand-mark {
-        display: grid;
-        flex: 0 0 auto;
-        width: 44px;
-        height: 44px;
-        place-items: center;
-        border-radius: 13px;
-        color: #fff;
-        background: linear-gradient(145deg, #3569e8, #214fc2);
-        box-shadow: 0 8px 20px rgba(40, 88, 214, 0.24);
-      }
-
-      .brand-mark svg {
-        width: 25px;
-        height: 25px;
-      }
-
-      .brand h1 {
-        overflow: hidden;
-        margin: 0;
-        font-size: clamp(1.2rem, 2.6vw, 1.55rem);
-        letter-spacing: -0.035em;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .brand p {
-        margin: 4px 0 0;
-        color: var(--muted);
-        font-size: 0.78rem;
-      }
-
-      .top-actions {
-        display: flex;
-        align-items: center;
-        flex: 0 0 auto;
         gap: 10px;
+        background: var(--canvas);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        width: 260px;
+      }
+
+      .search-box .icon {
+        color: var(--muted);
+      }
+
+      .search-box i.bi {
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .search-box input {
+        border: none;
+        outline: none;
+        background: none;
+        font-size: 13px;
+        width: 100%;
+        color: var(--ink);
+      }
+
+      .table-search {
+        width: 280px;
+        max-width: 100%;
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-left: auto;
       }
 
       .live-badge {
@@ -180,6 +372,975 @@
         }
       }
 
+      .icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        transition: 0.15s;
+      }
+
+      .icon-btn:hover {
+        border-color: #cbd5e1;
+        color: var(--ink);
+      }
+
+      .icon-btn svg,
+      .icon-btn i.bi {
+        width: 17px;
+        height: 17px;
+        font-size: 17px;
+        line-height: 1;
+      }
+
+      .admin-profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-left: 8px;
+        border-left: 1px solid var(--border);
+      }
+
+      .admin-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: #e0f2fe;
+        color: #0369a1;
+        font-weight: 700;
+        font-size: 12px;
+        display: grid;
+        place-items: center;
+      }
+
+      .admin-identity {
+        display: none;
+      }
+
+      @media (min-width: 640px) {
+        .admin-identity {
+          display: block;
+        }
+      }
+
+      .admin-identity-name {
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
+        color: var(--ink);
+      }
+
+      .admin-identity-sub {
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      .admin-menu {
+        position: relative;
+      }
+
+      .admin-menu-trigger {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 4px 8px 4px 4px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background: transparent;
+      }
+
+      .admin-menu-trigger:hover {
+        border-color: var(--border);
+        background: #fff;
+      }
+
+      .menu-dropdown {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        min-width: 220px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 18px 44px rgba(13, 26, 54, 0.16);
+        padding: 8px;
+        z-index: 60;
+      }
+
+      .menu-dropdown.closed {
+        display: none;
+      }
+
+      .menu-item {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: none;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 600;
+        text-align: left;
+      }
+
+      .menu-item:hover {
+        background: var(--canvas);
+      }
+
+      .menu-item .icon,
+      .menu-item svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+
+      .menu-item i.bi {
+        font-size: 16px;
+        color: var(--ink);
+      }
+
+      .logout-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        margin-top: 10px;
+        padding: 11px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .logout-link:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+      }
+
+      .logout-link .icon,
+      .logout-link svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        color: #ffffff;
+      }
+
+      .logout-link i.bi {
+        color: #ffffff;
+        font-size: 18px;
+      }
+
+      .logout-link svg * {
+        stroke: currentColor;
+      }
+
+      .mobile-toggle {
+        display: none;
+      }
+
+      /* Content */
+      .content {
+        padding: 32px;
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 28px;
+        gap: 16px;
+      }
+
+      .page-title h1 {
+        margin: 0 0 4px;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .page-title p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: 0.15s;
+      }
+
+      .btn-secondary {
+        background: #fff;
+        border: 1px solid var(--border);
+        color: var(--ink);
+      }
+
+      .btn-secondary:hover {
+        background: var(--canvas);
+      }
+
+      .btn-primary {
+        background: var(--blue);
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        background: var(--blue-hover);
+      }
+
+      /* Stats */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+
+      .stat-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        min-height: 96px;
+        padding: 18px 20px;
+        border: 1px solid rgba(220, 227, 238, 0.9);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 7px 24px rgba(37, 57, 95, 0.05);
+      }
+
+      .stat-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #eff6ff;
+        color: var(--blue);
+        flex-shrink: 0;
+      }
+
+      .stat-icon.green {
+        background: #f0fdf4;
+        color: #059669;
+      }
+
+      .stat-icon.amber {
+        background: #fffbeb;
+        color: #d97706;
+      }
+
+      .stat-icon svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        margin: 12px 0 4px;
+        letter-spacing: -0.02em;
+        color: var(--ink);
+      }
+
+      .stat-sub {
+        font-size: 11px;
+        color: #059669;
+        font-weight: 600;
+      }
+
+      .stat-sub.neutral {
+        color: var(--muted);
+      }
+
+      .sales-eye {
+        flex: 0 0 auto;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+      }
+
+      .sales-eye svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* Dashboard split */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+
+      .section-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 16px;
+      }
+
+      .section-card-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .section-card-head p {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+      }
+
+      .chart-container {
+        height: 180px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 20px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 16px;
+      }
+
+      .bar-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        justify-content: flex-end;
+      }
+
+      .bar {
+        width: 100%;
+        max-width: 32px;
+        background: #e0f2fe;
+        border-radius: 6px 6px 0 0;
+        height: var(--h);
+        transition: background 0.15s;
+      }
+
+      .bar:hover,
+      .bar.active {
+        background: var(--blue);
+      }
+
+      .bar-label {
+        margin-top: 8px;
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+
+      /* Analytics */
+      .analytics-head {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .analytics-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-right: 28px;
+      }
+
+      .view-toggle {
+        display: inline-flex;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .view-btn {
+        height: 36px;
+        padding: 0 14px;
+        border: 0;
+        border-right: 1px solid var(--border);
+        background: #fff;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .view-btn:last-child {
+        border-right: 0;
+      }
+
+      .view-btn.active {
+        background: var(--blue);
+        color: #fff;
+      }
+
+      .analytics-date {
+        height: 36px;
+        padding: 0 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 12px;
+        color: var(--ink);
+        background: #fff;
+      }
+
+      .analytics-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        margin: 4px 0 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+      }
+
+      .legend-swatch,
+      .summary-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 4px;
+        display: inline-block;
+        flex-shrink: 0;
+      }
+
+      .swatch-1h { background: #2563eb; }
+      .swatch-1d { background: #10b981; }
+      .swatch-2d { background: #f59e0b; }
+
+      .analytics-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .summary-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .summary-chip strong {
+        font-size: 18px;
+        color: var(--ink);
+      }
+
+      .summary-chip span:last-child {
+        font-weight: 600;
+      }
+
+      .summary-total {
+        justify-content: center;
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+      }
+
+      .analytics-chart {
+        height: 240px;
+      }
+
+      .analytics-chart.calendar-mode {
+        height: auto;
+        min-height: 240px;
+        display: block;
+        padding-top: 8px;
+        border-bottom: 0;
+      }
+
+      .month-calendar {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .month-cal-head {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted);
+        padding: 4px 0;
+      }
+
+      .month-cell {
+        min-height: 86px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 8px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .month-cell.empty {
+        background: #f8fafc;
+        border-style: dashed;
+      }
+
+      .month-cell.selected {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+      }
+
+      .month-day {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .month-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .plan-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      .plan-badge.b1h { background: #2563eb; }
+      .plan-badge.b1d { background: #10b981; }
+      .plan-badge.b2d { background: #f59e0b; }
+
+      .month-total {
+        margin-top: auto;
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+
+      .stacked-bar {
+        width: 100%;
+        max-width: 36px;
+        height: var(--h);
+        display: flex;
+        flex-direction: column-reverse;
+        border-radius: 6px 6px 0 0;
+        overflow: hidden;
+        background: #eef2f7;
+      }
+
+      .stacked-bar .seg {
+        width: 100%;
+      }
+
+      .seg-1h { background: #2563eb; }
+      .seg-1d { background: #10b981; }
+      .seg-2d { background: #f59e0b; }
+
+      .analytics-note {
+        margin: 10px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 768px) {
+        .analytics-summary {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .analytics-controls {
+          width: 100%;
+          margin-right: 0;
+          justify-content: flex-start;
+        }
+        .analytics-date {
+          margin-left: 0;
+        }
+        .month-cell {
+          min-height: 64px;
+          padding: 6px;
+        }
+        .month-total {
+          display: none;
+        }
+        .analytics-chart {
+          height: 220px;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .month-calendar {
+          gap: 4px;
+        }
+        .month-cell {
+          min-height: 54px;
+          padding: 4px;
+          border-radius: 8px;
+        }
+        .month-cal-head {
+          font-size: 10px;
+        }
+        .plan-badge {
+          min-width: 16px;
+          height: 16px;
+          font-size: 9px;
+          padding: 0 4px;
+        }
+      }
+
+      /* Table */
+      .table-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        overflow: hidden;
+      }
+
+      .table-header-wrap {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .table-tools {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        min-width: 760px;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 13px;
+      }
+
+      th {
+        background: var(--canvas);
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+      }
+
+      td {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        color: var(--ink);
+        font-size: 13px;
+        vertical-align: middle;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--ink);
+        font-weight: 700;
+      }
+
+      .avatar {
+        display: grid;
+        flex: 0 0 auto;
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        color: var(--blue);
+        background: var(--primary-soft);
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .password-cell {
+        display: flex;
+        align-items: center;
+        min-width: 120px;
+        gap: 7px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .eye-button {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        place-items: center;
+        border: 0;
+        border-radius: 7px;
+        color: #7b879b;
+        background: transparent;
+      }
+
+      .eye-button:hover {
+        color: var(--blue);
+        background: #eaf0ff;
+      }
+
+      .eye-button svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .time-cell strong {
+        display: block;
+        margin-bottom: 3px;
+        color: #354159;
+        font-size: 0.76rem;
+      }
+
+      .time-cell span {
+        color: var(--muted);
+        font-size: 0.68rem;
+      }
+
+      .stamp-cell {
+        color: #5c6980;
+        font-size: 0.72rem;
+        white-space: nowrap;
+      }
+
+      .stamp-cell .stamp-sub {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 0.64rem;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 0.67rem;
+        font-weight: 700;
+      }
+
+      .status-pill::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        content: "";
+      }
+
+      .status-pill.active {
+        color: var(--success, #087e6c);
+        background: #e6f7f3;
+      }
+
+      .status-pill.active::before {
+        background: #0da58c;
+      }
+
+      .status-pill.unused {
+        color: #9a6700;
+        background: #fff5d8;
+      }
+
+      .status-pill.unused::before {
+        background: #d39518;
+      }
+
+      .status-pill.ready {
+        color: var(--blue);
+        background: #eaf0ff;
+      }
+
+      .status-pill.ready::before {
+        background: var(--blue);
+      }
+
+      .status-pill.expired {
+        color: #c13b4d;
+        background: #ffedf0;
+      }
+
+      .status-pill.expired::before {
+        background: #db6a7a;
+      }
+
+      .badge-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .badge-status.expired {
+        background: #f1f5f9;
+        color: var(--muted);
+      }
+
+      .badge-status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .device-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .device-badge {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        font-weight: 700;
+        font-size: 11px;
+        color: var(--blue);
+        display: grid;
+        place-items: center;
+      }
+
+      .row-actions {
+        display: flex;
+        gap: 7px;
+      }
+
+      .ghost-button,
+      .icon-button {
+        height: 32px;
+        padding: 0 11px;
+        border: 1px solid #d7deea;
+        border-radius: 8px;
+        color: #526077;
+        background: #fff;
+        font-size: 0.69rem;
+      }
+
+      .ghost-button:hover {
+        border-color: #9eb1d8;
+        color: var(--blue);
+        background: #f5f8ff;
+      }
+
+      .icon-button {
+        width: 32px;
+        padding: 0;
+        color: #c13b4d;
+      }
+
+      .icon-button:hover {
+        border-color: #e5adb6;
+        background: #ffedf0;
+      }
+
+      .icon-button svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .empty-state {
+        padding: 42px 20px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .danger-button {
+        display: none;
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid #f0c9cf;
+        border-radius: 8px;
+        color: #c13b4d;
+        background: #ffedf0;
+        font-size: 0.72rem;
+      }
+
+      .danger-button.visible {
+        display: inline-flex;
+      }
+
+      /* Buttons */
       .secondary-button,
       .ghost-button,
       .icon-button,
@@ -189,7 +1350,7 @@
         align-items: center;
         justify-content: center;
         border: 0;
-        font-weight: 720;
+        font-weight: 600;
       }
 
       .secondary-button {
@@ -208,101 +1369,36 @@
         background: #f9faff;
       }
 
-      .secondary-button svg {
-        width: 16px;
-        height: 16px;
+      .primary-button {
+        min-height: 46px;
+        padding: 0 20px;
+        border-radius: 10px;
+        color: #fff;
+        background: var(--blue);
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
       }
 
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 15px;
-        margin-bottom: 18px;
+      .primary-button:hover {
+        background: var(--blue-hover);
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.27);
       }
 
-      .stat-card {
-        display: flex;
-        align-items: center;
-        min-height: 96px;
-        padding: 18px 20px;
-        border: 1px solid rgba(220, 227, 238, 0.9);
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.94);
-        box-shadow: 0 7px 24px rgba(37, 57, 95, 0.05);
+      .primary-button svg {
+        width: 18px;
+        height: 18px;
+        margin-right: 9px;
       }
 
-      .stat-icon {
-        display: grid;
-        flex: 0 0 auto;
-        width: 42px;
-        height: 42px;
-        margin-right: 13px;
-        place-items: center;
-        border-radius: 12px;
-        color: var(--primary);
-        background: var(--primary-soft);
-      }
-
-      .stat-icon.green {
-        color: var(--success);
-        background: var(--success-soft);
-      }
-
-      .stat-icon.amber {
-        color: #a16700;
-        background: var(--warning-soft);
-      }
-
-      .stat-icon svg {
-        width: 21px;
-        height: 21px;
-      }
-
-      .stat-label {
-        display: block;
-        margin-bottom: 3px;
-        color: var(--muted);
-        font-size: 0.72rem;
-        font-weight: 680;
-      }
-
-      .stat-value {
-        display: block;
-        font-size: 1.25rem;
-        font-weight: 780;
-        letter-spacing: -0.03em;
-      }
-
-      .stat-value-line {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .sales-eye {
-        flex: 0 0 auto;
-        width: 26px;
-        height: 26px;
-      }
-
-      .sales-eye svg {
-        width: 16px;
-        height: 16px;
-      }
-
-      .generator-card,
-      .table-card {
-        border: 1px solid rgba(220, 227, 238, 0.95);
-        border-radius: 16px;
-        background: var(--card);
-        box-shadow: var(--shadow);
-      }
-
+      /* Generator */
       .generator-card {
         display: grid;
         grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.65fr);
         overflow: hidden;
-        margin-bottom: 18px;
+        border: 1px solid rgba(220, 227, 238, 0.9);
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: 0 16px 42px rgba(37, 57, 95, 0.08);
+        margin-bottom: 28px;
       }
 
       .generator-form {
@@ -319,7 +1415,7 @@
 
       .eyebrow {
         margin: 0 0 5px;
-        color: var(--primary);
+        color: var(--blue);
         font-size: 0.68rem;
         font-weight: 800;
         letter-spacing: 0.11em;
@@ -355,12 +1451,7 @@
         margin-bottom: 7px;
         color: #34415a;
         font-size: 0.77rem;
-        font-weight: 720;
-      }
-
-      .input-action {
-        display: flex;
-        gap: 8px;
+        font-weight: 700;
       }
 
       input[type="text"],
@@ -391,11 +1482,26 @@
         border-color: #9eabc0;
       }
 
+      input[readonly] {
+        background: #f1f5f9;
+        color: var(--ink);
+        cursor: default;
+      }
+
       input:focus,
       select:focus {
-        border-color: var(--primary);
+        border-color: var(--blue);
         background: #fff;
-        box-shadow: 0 0 0 4px var(--focus);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
+      }
+
+      .input-action {
+        display: flex;
+        gap: 8px;
+      }
+
+      .input-action input {
+        flex: 1;
       }
 
       .auto-button {
@@ -404,10 +1510,10 @@
         padding: 0 13px;
         border: 1px solid #c9d5ee;
         border-radius: 9px;
-        color: var(--primary);
+        color: var(--blue);
         background: #f2f6ff;
         font-size: 0.73rem;
-        font-weight: 750;
+        font-weight: 700;
       }
 
       .auto-button:hover {
@@ -423,26 +1529,26 @@
       }
 
       .duration-pill {
-        height: 38px;
-        padding: 0 16px;
+        height: 48px;
+        padding: 0 22px;
         border: 1px solid #d4dce8;
         border-radius: 999px;
         color: #59657a;
         background: #fff;
-        font-size: 0.75rem;
-        font-weight: 720;
+        font-size: 0.88rem;
+        font-weight: 700;
       }
 
       .duration-pill:hover {
         border-color: #a7b7d4;
-        color: var(--primary);
+        color: var(--blue);
       }
 
       .duration-pill.active {
-        border-color: var(--primary);
+        border-color: var(--blue);
         color: #fff;
-        background: var(--primary);
-        box-shadow: 0 5px 12px rgba(40, 88, 214, 0.2);
+        background: var(--blue);
+        box-shadow: 0 5px 12px rgba(37, 99, 235, 0.2);
       }
 
       .custom-time {
@@ -465,30 +1571,8 @@
         font-size: 0.76rem;
       }
 
-      .primary-button {
-        min-height: 46px;
-        padding: 0 20px;
-        border-radius: 10px;
-        color: #fff;
-        background: var(--primary);
-        box-shadow: 0 8px 18px rgba(40, 88, 214, 0.2);
-      }
-
-      .primary-button:hover {
-        background: var(--primary-dark);
-        box-shadow: 0 10px 22px rgba(40, 88, 214, 0.27);
-        transform: translateY(-1px);
-      }
-
-      .primary-button svg {
-        width: 18px;
-        height: 18px;
-        margin-right: 9px;
-      }
-
       .generate-button {
         width: 100%;
-        margin-top: 3px;
       }
 
       .qr-preview {
@@ -496,7 +1580,7 @@
         align-items: center;
         justify-content: center;
         padding: 28px;
-        border-left: 1px solid var(--line);
+        border-left: 1px solid var(--border);
         background:
           radial-gradient(circle at 75% 20%, rgba(73, 116, 228, 0.08), transparent 34%),
           #f8faff;
@@ -513,7 +1597,7 @@
         align-items: center;
         gap: 7px;
         margin-bottom: 14px;
-        color: var(--success);
+        color: #059669;
         font-size: 0.69rem;
         font-weight: 800;
         letter-spacing: 0.08em;
@@ -524,7 +1608,7 @@
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background: #13a98f;
+        background: #10a68f;
         content: "";
       }
 
@@ -550,7 +1634,7 @@
       .preview-code {
         margin: 0;
         font-size: 0.98rem;
-        font-weight: 780;
+        font-weight: 700;
         overflow-wrap: anywhere;
       }
 
@@ -574,15 +1658,39 @@
 
       .qr-action-button {
         width: 100%;
-        padding-inline: 10px;
       }
 
-      .qr-action-button svg {
+      .qr-action-button svg,
+      .qr-action-button i.bi {
         flex: 0 0 auto;
+        width: 15px;
+        height: 15px;
+        color: var(--blue);
+        font-size: 15px;
+      }
+
+      .icon-only-button {
+        width: 36px;
+        height: 36px;
+        min-height: 36px;
+        padding: 0;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .icon-only-button i.bi {
+        font-size: 16px;
+        line-height: 1;
       }
 
       .large-qr-modal {
         width: min(100%, 590px);
+      }
+
+      #qr-backdrop.modal-backdrop {
+        z-index: 3000;
       }
 
       .large-qr-content {
@@ -616,7 +1724,7 @@
       .large-preview-code {
         margin: 0;
         font-size: 1.2rem;
-        font-weight: 800;
+        font-weight: 700;
         overflow-wrap: anywhere;
       }
 
@@ -632,274 +1740,10 @@
         font-weight: 700;
       }
 
-      .table-card {
-        overflow: hidden;
-      }
-
-      .table-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 24px 26px 19px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .table-tools {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .danger-button {
-        display: none;
-        height: 36px;
-        padding: 0 12px;
-        border: 1px solid #f0c9cf;
-        border-radius: 8px;
-        color: var(--danger);
-        background: var(--danger-soft);
-        font-size: 0.72rem;
-      }
-
-      .danger-button.visible {
-        display: inline-flex;
-      }
-
-      .table-wrap {
-        overflow-x: auto;
-      }
-
-      table {
-        width: 100%;
-        min-width: 1120px;
-        border-collapse: collapse;
-        text-align: left;
-      }
-
-      th {
-        padding: 12px 15px;
-        color: #7a8496;
-        background: #fafbfc;
-        font-size: 0.67rem;
-        font-weight: 780;
-        letter-spacing: 0.055em;
-        text-transform: uppercase;
-        white-space: nowrap;
-      }
-
-      th:first-child,
-      td:first-child {
-        width: 50px;
-        padding-left: 26px;
-      }
-
-      td {
-        padding: 15px;
-        border-top: 1px solid #edf0f5;
-        color: #364259;
-        font-size: 0.79rem;
-        vertical-align: middle;
-      }
-
-      tbody tr:hover {
-        background: #fbfcff;
-      }
-
-      input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        margin: 0;
-        accent-color: var(--primary);
-        cursor: pointer;
-      }
-
-      .user-cell {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: var(--ink);
-        font-weight: 720;
-      }
-
-      .avatar {
-        display: grid;
-        flex: 0 0 auto;
-        width: 34px;
-        height: 34px;
-        place-items: center;
-        border-radius: 9px;
-        color: var(--primary);
-        background: var(--primary-soft);
-        font-size: 0.7rem;
-        font-weight: 800;
-        text-transform: uppercase;
-      }
-
-      .password-cell {
-        display: flex;
-        align-items: center;
-        min-width: 120px;
-        gap: 7px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      }
-
-      .eye-button {
-        display: grid;
-        width: 28px;
-        height: 28px;
-        padding: 0;
-        place-items: center;
-        border: 0;
-        border-radius: 7px;
-        color: #7b879b;
-        background: transparent;
-      }
-
-      .eye-button:hover {
-        color: var(--primary);
-        background: var(--primary-soft);
-      }
-
-      .eye-button svg {
-        width: 15px;
-        height: 15px;
-      }
-
-      .time-cell strong {
-        display: block;
-        margin-bottom: 3px;
-        color: #354159;
-        font-size: 0.76rem;
-      }
-
-      .time-cell span {
-        color: var(--soft);
-        font-size: 0.68rem;
-      }
-
-      .stamp-cell {
-        color: #5c6980;
-        font-size: 0.72rem;
-        white-space: nowrap;
-      }
-
-      .stamp-cell .stamp-sub {
-        display: block;
-        margin-top: 3px;
-        color: var(--soft);
-        font-size: 0.64rem;
-      }
-
-      .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 9px;
-        border-radius: 999px;
-        font-size: 0.67rem;
-        font-weight: 780;
-      }
-
-      .status-pill::before {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        content: "";
-      }
-
-      .status-pill.active {
-        color: var(--success);
-        background: var(--success-soft);
-      }
-
-      .status-pill.active::before {
-        background: #0da58c;
-      }
-
-      .status-pill.unused {
-        color: var(--warning);
-        background: var(--warning-soft);
-      }
-
-      .status-pill.unused::before {
-        background: #d39518;
-      }
-
-      .status-pill.ready {
-        color: var(--primary);
-        background: var(--primary-soft);
-      }
-
-      .status-pill.ready::before {
-        background: var(--primary);
-      }
-
-      .status-pill.expired {
-        color: var(--danger);
-        background: var(--danger-soft);
-      }
-
-      .status-pill.expired::before {
-        background: #db6a7a;
-      }
-
-      .row-actions {
-        display: flex;
-        gap: 7px;
-      }
-
-      .row-qr-button {
-        gap: 5px;
-      }
-
-      .row-qr-button svg {
-        width: 14px;
-        height: 14px;
-      }
-
-      .ghost-button,
-      .icon-button {
-        height: 32px;
-        padding: 0 11px;
-        border: 1px solid #d7deea;
-        border-radius: 8px;
-        color: #526077;
-        background: #fff;
-        font-size: 0.69rem;
-      }
-
-      .ghost-button:hover {
-        border-color: #9eb1d8;
-        color: var(--primary);
-        background: #f5f8ff;
-      }
-
-      .icon-button {
-        width: 32px;
-        padding: 0;
-        color: var(--danger);
-      }
-
-      .icon-button:hover {
-        border-color: #e5adb6;
-        background: var(--danger-soft);
-      }
-
-      .icon-button svg {
-        width: 14px;
-        height: 14px;
-      }
-
-      .empty-state {
-        padding: 42px 20px;
-        color: var(--muted);
-        text-align: center;
-      }
-
+      /* Modal */
       .modal-backdrop {
         position: fixed;
-        z-index: 20;
+        z-index: 1000;
         inset: 0;
         display: none;
         align-items: center;
@@ -934,7 +1778,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 21px 24px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 1px solid var(--border);
       }
 
       .modal-header h2 {
@@ -972,14 +1816,14 @@
         padding: 18px 24px 24px;
       }
 
+      /* Toast */
       .toast {
         position: fixed;
-        z-index: 30;
+        z-index: 100;
         right: 22px;
         bottom: 22px;
         display: flex;
         align-items: center;
-        max-width: calc(100% - 44px);
         gap: 10px;
         padding: 13px 16px;
         border: 1px solid #c9e6df;
@@ -988,15 +1832,25 @@
         background: #f5fffc;
         box-shadow: 0 14px 34px rgba(28, 52, 84, 0.16);
         font-size: 0.78rem;
-        font-weight: 680;
+        font-weight: 600;
         opacity: 0;
         pointer-events: none;
         transform: translateY(12px);
+        transition: 0.25s;
+        z-index: 200;
       }
 
       .toast.show {
         opacity: 1;
         transform: translateY(0);
+      }
+
+      .toast::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        background: var(--green);
+        border-radius: 50%;
       }
 
       @media (max-width: 900px) {
@@ -1005,35 +1859,41 @@
         }
 
         .qr-preview {
-          border-top: 1px solid var(--line);
+          border-top: 1px solid var(--border);
           border-left: 0;
         }
 
         .qr-inner {
-          max-width: 330px;
+          max-width: 360px;
+          padding: 0 8px;
         }
       }
 
-      @media (max-width: 680px) {
-        .app-shell {
-          width: min(100% - 24px, 1240px);
-          padding-top: 18px;
+      @media (max-width: 1024px) {
+        .stats-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
-        .topbar {
-          align-items: flex-start;
-          flex-direction: column;
-          gap: 15px;
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
         }
 
-        .top-actions {
-          width: 100%;
+        .sidebar.open {
+          transform: translateX(0);
         }
 
-        .live-badge,
-        .top-actions .secondary-button {
-          flex: 1;
-          justify-content: center;
+        .main {
+          margin-left: 0;
+        }
+
+        .mobile-toggle {
+          display: grid;
         }
 
         .stats-grid {
@@ -1041,69 +1901,74 @@
           gap: 10px;
         }
 
-        .stat-card {
-          min-height: 78px;
+        .topbar {
+          padding: 0 16px;
         }
 
-        .generator-form {
-          padding: 24px 20px 26px;
+        .content {
+          padding: 20px 16px;
+        }
+
+        .live-badge {
+          flex: 1;
+          justify-content: center;
         }
 
         .form-grid {
           grid-template-columns: 1fr;
         }
 
-        .field.full {
-          grid-column: auto;
+        .generator-form {
+          padding: 20px 16px 22px;
         }
 
-        .duration-pill {
-          flex: 1 1 42%;
-        }
-
-        .qr-preview {
-          padding: 25px 20px;
-        }
-
-        .table-header {
-          align-items: flex-start;
+        .input-action {
           flex-direction: column;
-          padding: 21px 20px 16px;
         }
 
-        .table-tools {
+        .input-action .auto-button {
           width: 100%;
         }
 
-        .danger-button.visible {
-          flex: 1;
+        .duration-pills,
+        .modal-pills {
+          gap: 6px;
         }
 
-        .modal-footer .secondary-button,
-        .modal-footer .primary-button {
-          flex: 1;
-        }
-      }
-
-      @media print {
-        body * {
-          visibility: hidden;
+        .duration-pill {
+          flex: 1 1 calc(50% - 6px);
+          justify-content: center;
+          text-align: center;
+          padding: 0 12px;
+          height: 46px;
+          font-size: 0.84rem;
         }
 
-        .qr-preview,
-        .qr-preview * {
-          visibility: visible;
+        .custom-time {
+          flex-wrap: wrap;
         }
 
-        .qr-preview {
-          position: absolute;
-          inset: 0;
-          border: 0;
-          background: #fff;
+        .custom-time input {
+          max-width: 100%;
+          flex: 1 1 120px;
+        }
+
+        #admin-password-form.form-grid {
+          grid-template-columns: 1fr !important;
+          padding: 16px !important;
+        }
+
+        .section-card-head {
+          padding: 16px;
         }
 
         .qr-actions {
-          display: none;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+
+        .qr-inner {
+          max-width: 100%;
         }
       }
 
@@ -1116,175 +1981,531 @@
           animation-iteration-count: 1 !important;
         }
       }
+      #print-area {
+        display: none;
+      }
+
+      @media print {
+        body * {
+          visibility: hidden !important;
+        }
+        #print-area,
+        #print-area * {
+          visibility: visible !important;
+        }
+        #print-area {
+          display: flex !important;
+          position: fixed;
+          inset: 0;
+          align-items: center;
+          justify-content: center;
+          background: #fff;
+        }
+        #print-area .print-card {
+          text-align: center;
+          padding: 16px;
+        }
+        #print-area .qr {
+          width: 320px;
+          height: 320px;
+          max-width: 100%;
+          image-rendering: pixelated;
+        }
+        #print-area .label {
+          margin: 10px 0 2px;
+          color: #475569;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+        }
+        #print-area .code {
+          margin: 4px 0 4px;
+          font-size: 30px;
+          font-weight: 800;
+          letter-spacing: .08em;
+          color: #0f172a;
+        }
+        #print-area .pw {
+          margin: 0;
+          font-size: 22px;
+          font-weight: 700;
+          color: #0f172a;
+        }
+        @page {
+          margin: 12mm;
+        }
+      }
+
+      .archive-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 24px 20px;
+      }
+
+      .archive-page-info {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .archive-pagination {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+      }
+
+      .archive-pagination .secondary-button {
+        min-height: 34px;
+        padding: 0 12px;
+        font-size: 12px;
+      }
+
+      @media (max-width: 768px) {
+        .archive-footer {
+          padding: 12px 16px 16px;
+          flex-wrap: wrap;
+        }
+        .analytics-controls {
+          margin-right: 0;
+        }
+      }
+
     </style>
   </head>
   <body>
-    <main class="app-shell">
-      <header class="topbar">
-        <div class="brand">
-          <div class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none">
-              <path d="M4.5 12.7a17.2 17.2 0 0 1 23 0M8.5 17.1a11.4 11.4 0 0 1 15 0M12.7 21.4a5.4 5.4 0 0 1 6.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
-              <circle cx="16" cy="25.5" r="1.65" fill="currentColor" />
-            </svg>
-          </div>
-          <div>
-            <h1>Wi-Fi Admin Control Panel</h1>
-            <p>Guest network access and voucher management</p>
-          </div>
+    <div class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <img src="/images/logo_qspot.png" alt="" width="25" height="25" />
         </div>
-        <div class="top-actions">
+        <div>
+          <h2 class="brand-title">Q-Spot</h2>
+          <p class="brand-sub">WiFi Hotspot</p>
+        </div>
+      </div>
+
+      <div class="nav-group-label">Management</div>
+      <nav class="nav-list" aria-label="Admin sections">
+        <button class="nav-link active" data-tab="dashboard" type="button">
+          <i class="bi bi-grid-1x2-fill icon" aria-hidden="true"></i>
+          Dashboard
+        </button>
+        <button class="nav-link" data-tab="sessions" type="button">
+          <i class="bi bi-people-fill icon" aria-hidden="true"></i>
+          Active Sessions
+        </button>
+        <button class="nav-link" data-tab="vouchers" type="button">
+          <i class="bi bi-ticket-perforated-fill icon" aria-hidden="true"></i>
+          Voucher Manager
+        </button>
+        <button class="nav-link" data-tab="analytics" type="button">
+          <i class="bi bi-bar-chart-line-fill icon" aria-hidden="true"></i>
+          Analytics
+        </button>
+
+        <div class="nav-group-label">System</div>
+        <button class="nav-link" data-tab="settings" type="button">
+          <i class="bi bi-gear-fill icon" aria-hidden="true"></i>
+          Settings
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="nav-link logout-link" id="sidebar-logout" type="button">
+          <i class="bi bi-box-arrow-right icon" aria-hidden="true"></i>
+          Log out
+        </button>
+      </div>
+    </div>
+
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-toggle" id="menuToggle" aria-label="Toggle Menu" type="button">
+          <i class="bi bi-list icon" aria-hidden="true"></i>
+        </button>
+
+        <div class="topbar-actions">
           <div class="live-badge" aria-live="polite">
             <span class="live-dot" aria-hidden="true"></span>
-            <span><strong id="header-active">0</strong> active users</span>
+            <span>
+              <strong id="header-active">0</strong> active users
+            </span>
           </div>
-          <button class="secondary-button" id="admin-logout" type="button">Log out</button>
+          <div class="admin-menu">
+            <button class="admin-menu-trigger" id="admin-menu-trigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Admin menu">
+              <div class="admin-avatar">AD</div>
+              <div class="admin-identity">
+                <div class="admin-identity-name">Admin Q-Spot</div>
+                <div class="admin-identity-sub"></div>
+              </div>
+            </button>
+            <div class="menu-dropdown closed" id="admin-menu" role="menu">
+              <button class="menu-item" id="menu-settings" type="button" role="menuitem">
+                <i class="bi bi-gear icon" aria-hidden="true"></i>
+                Settings
+              </button>
+              <button class="menu-item" id="admin-logout" type="button" role="menuitem">
+                <i class="bi bi-box-arrow-right icon" aria-hidden="true"></i>
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
-      <section class="stats-grid" aria-label="Network overview">
-        <article class="stat-card">
-          <span class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M16 19v-1.5A3.5 3.5 0 0 0 12.5 14h-6A3.5 3.5 0 0 0 3 17.5V19M9.5 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM17 8v6m-3-3h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-            </svg>
-          </span>
-          <div><span class="stat-label">Total vouchers</span><strong class="stat-value" id="total-vouchers">0</strong></div>
-        </article>
-        <article class="stat-card">
-          <span class="stat-icon green">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" stroke="currentColor" stroke-width="1.8" />
-              <path d="m8 12 2.5 2.5L16.5 8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </span>
-          <div><span class="stat-label">Online now</span><strong class="stat-value" id="active-users">0</strong></div>
-        </article>
-        <article class="stat-card">
-          <span class="stat-icon amber">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 2v20M16.5 6H9.75a3.25 3.25 0 0 0 0 6.5h4.5a3.25 3.25 0 0 1 0 6.5H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-            </svg>
-          </span>
-          <div>
-            <span class="stat-label">Total sales</span>
-            <div class="stat-value-line">
-              <strong class="stat-value" id="total-sales">₱0</strong>
-              <button class="eye-button sales-eye" id="toggle-sales" type="button" aria-label="Show total sales" aria-pressed="false">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" />
-                  <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8" />
-                </svg>
-              </button>
+      <main class="content">
+        <section class="tab-panel" id="tab-dashboard" aria-labelledby="dashboard-title">
+          <div class="page-header">
+            <div class="page-title">
+              <h1 id="dashboard-title">Dashboard Overview</h1>
+              <p>Real-time telemetry and revenue collection for your WiFi hotspot.</p>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-secondary" id="exportBtn" type="button">Export Logs</button>
+              <button class="btn btn-primary" id="genVoucherBtn" type="button">Generate Vouchers</button>
             </div>
           </div>
-        </article>
-      </section>
 
-      <section class="generator-card" aria-labelledby="generator-title">
-        <div class="generator-form">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Voucher generator</p>
-              <h2 id="generator-title">Create guest access</h2>
-              <p class="section-note">Generate secure credentials and a unique QR access card.</p>
-            </div>
-          </div>
-          <form id="voucher-form" class="form-grid">
-            <div class="field">
-              <label for="voucher-code">Voucher Code</label>
-              <div class="input-action">
-                <input id="voucher-code" type="text" placeholder="5 letters/numbers" maxlength="5" minlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="characters" required />
-                <button class="auto-button" id="auto-generate" type="button">Auto-Generate</button>
+          <section class="stats-grid" aria-label="Network overview">
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Total vouchers</span>
+                <div class="stat-icon">
+                  <i class="bi bi-ticket-perforated icon" aria-hidden="true"></i>
+                </div>
               </div>
-            </div>
-            <div class="field">
-              <label for="voucher-password">Password</label>
-              <input id="voucher-password" type="text" placeholder="4-digit password" maxlength="4" minlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" required />
-            </div>
-            <div class="field full">
-              <span class="field-label">Access duration</span>
-              <div class="duration-pills" id="duration-pills">
-                <button class="duration-pill active" type="button" data-hours="1" data-label="1 Hour">1 Hour · ₱5</button>
-                <button class="duration-pill" type="button" data-hours="24" data-label="1 Day">1 Day · ₱20</button>
-                <button class="duration-pill" type="button" data-hours="48" data-label="2 Days">2 Days · ₱35</button>
-                <button class="duration-pill" type="button" data-hours="custom" data-label="Custom">Custom</button>
+              <div class="stat-value" id="total-vouchers">0</div>
+              <div class="stat-sub neutral">issued access codes</div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Active Connected Users</span>
+                <div class="stat-icon green">
+                  <i class="bi bi-people icon" aria-hidden="true"></i>
+                </div>
               </div>
-              <div class="custom-time" id="custom-time">
-                <input id="custom-hours" type="number" min="1" max="720" value="3" aria-label="Custom duration in hours" />
-                <span>hours of access</span>
+              <div class="stat-value" id="stat-active">0</div>
+              <div class="stat-sub neutral">online now</div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Total sales</span>
+                <button class="eye-button sales-eye" id="toggle-sales" type="button" aria-label="Show total sales" aria-pressed="false">
+                  <i class="bi bi-coin icon" aria-hidden="true"></i>
+                </button>
               </div>
-            </div>
-            <div class="field full">
-              <button class="primary-button generate-button" type="submit">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M4 4h5v5H4V4Zm11 0h5v5h-5V4ZM4 15h5v5H4v-5Zm11 0h2v2h-2v-2Zm3 0h2v5h-2v-5Zm-3 3h2v2h-2v-2Z" stroke="currentColor" stroke-width="1.8" />
-                </svg>
-                Generate QR &amp; Add User
-              </button>
-            </div>
-          </form>
-        </div>
-        <aside class="qr-preview" aria-label="Generated QR voucher preview">
-          <div class="qr-inner">
-            <div class="preview-label">QR preview</div>
-            <div class="qr-box"><canvas id="qr-canvas" width="264" height="264" aria-label="Voucher QR pattern"></canvas></div>
-            <p class="preview-code" id="preview-code">Ready to generate</p>
-            <p class="preview-meta" id="preview-meta">Create a voucher to update this access card.<br /><span>Guest Wi-Fi Access</span></p>
-            <div class="qr-actions">
-              <button class="secondary-button qr-action-button" id="large-qr-preview" type="button">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M8 3H3v5m13-5h5v5M8 21H3v-5m18 0v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                Enlarge
-              </button>
-              <button class="secondary-button qr-action-button" id="print-qr" type="button">Print QR</button>
-            </div>
-          </div>
-        </aside>
-      </section>
+              <div class="stat-value" id="stat-sales">₱0</div>
+              <div class="stat-sub" id="stat-sales-change">—</div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Time Purchased Today</span>
+                <div class="stat-icon amber">
+                  <i class="bi bi-clock icon" aria-hidden="true"></i>
+                </div>
+              </div>
+              <div class="stat-value" id="stat-time">0 hrs</div>
+              <div class="stat-sub neutral">access time sold</div>
+            </article>
+          </section>
 
-      <section class="table-card" aria-labelledby="users-title">
-        <div class="table-header">
-          <div>
-            <p class="eyebrow">Access management</p>
-            <h2 id="users-title">Active users &amp; vouchers</h2>
-            <p class="section-note">Manage credentials, connection status, and assigned time.</p>
+          <div class="dashboard-grid">
+            <section class="card" aria-labelledby="revenue-title">
+              <div class="section-card-head">
+                <div>
+                  <h2 id="revenue-title">Revenue Performance</h2>
+                  <p>Coin slot collections and voucher sales over 7 days</p>
+                </div>
+
+              </div>
+              <div class="chart-container" id="revenue-chart-dashboard"></div>
+              <div style="display: flex; justify-content: center; gap: 20px; font-size: 11px; color: var(--muted); margin-top: 12px">
+                <span style="display: flex; align-items: center; gap: 6px">
+                  <span style="width: 8px; height: 8px; background: var(--blue); border-radius: 50%"></span>Voucher Sales
+                </span>
+              </div>
+            </section>
           </div>
-          <div class="table-tools">
-            <button class="danger-button" id="remove-selected" type="button">Remove selected</button>
+        </section>
+
+        <section class="tab-panel" id="tab-sessions" hidden>
+          <div class="page-header">
+            <div class="page-title">
+              <h1>Active Sessions</h1>
+              <p>Guest access credentials, connection status, and assigned time.</p>
+            </div>
           </div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th><input id="select-all" type="checkbox" aria-label="Select all vouchers" /></th>
-                <th>Voucher Code</th>
-                <th>Password</th>
-                <th>Assigned / Remaining</th>
-                <th>Created</th>
-                <th>Ended</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="users-body"></tbody>
-          </table>
-        </div>
-      </section>
-    </main>
+
+          <section class="table-card" aria-labelledby="users-title">
+            <div class="table-header-wrap">
+              <div>
+                <p class="eyebrow">Access management</p>
+                <h2 id="users-title">Vouchers</h2>
+                <p class="section-note">Manage credentials, connection status, and assigned time.</p>
+              </div>
+              <div class="search-box table-search">
+                <i class="bi bi-search icon" style="color: var(--muted); width: 16px; height: 16px" aria-hidden="true"></i>
+                <input type="text" id="table-search" placeholder="Search voucher, password, device, or status..." />
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Voucher Code</th>
+                    <th>Password</th>
+                    <th>Device</th>
+                    <th>Assigned / Remaining</th>
+                    <th>Created</th>
+                    <th>Ended</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="users-body"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="tab-panel" id="tab-vouchers" hidden>
+          <section class="generator-card" aria-labelledby="generator-title">
+            <div class="generator-form">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Voucher Manager</p>
+                  <h2 id="generator-title">Create guest access</h2>
+                  <p class="section-note">Auto-generate secure credentials and a unique QR access card. Each voucher code can be used only once and is never reused.</p>
+                </div>
+              </div>
+              <form id="voucher-form" class="form-grid">
+                <div class="field">
+                  <label for="voucher-code">Voucher Code</label>
+                  <input id="voucher-code" type="text" placeholder="Auto-generated" maxlength="5" minlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="characters" readonly required />
+                </div>
+                <div class="field">
+                  <label for="voucher-password">Password</label>
+                  <input id="voucher-password" type="text" placeholder="Auto-generated" maxlength="4" minlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" readonly required />
+                </div>
+                <div class="field full">
+                  <span class="field-label">Access duration</span>
+                  <div class="duration-pills" id="duration-pills">
+                    <button class="duration-pill active" type="button" data-hours="1" data-label="1 Hour">1 Hour · ₱5</button>
+                    <button class="duration-pill" type="button" data-hours="24" data-label="1 Day">1 Day · ₱20</button>
+                    <button class="duration-pill" type="button" data-hours="48" data-label="2 Days">2 Days · ₱35</button>
+                    <button class="duration-pill" type="button" data-hours="custom" data-label="Custom">Custom</button>
+                  </div>
+                  <div class="custom-time" id="custom-time">
+                    <input id="custom-hours" type="number" min="1" max="720" value="3" aria-label="Custom duration in hours" />
+                    <span>hours of access</span>
+                  </div>
+                </div>
+                <div class="field full">
+                  <button class="primary-button generate-button" type="submit">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 4h5v5H4V4Zm11 0h5v5h-5V4ZM4 15h5v5H4v-5Zm11 0h2v2h-2v-2Zm3 0h2v5h-2v-5Zm-3 3h2v2h-2v-2Z" stroke="currentColor" stroke-width="1.8" />
+                    </svg>
+                    Generate QR &amp; Add User
+                  </button>
+                </div>
+              </form>
+            </div>
+            <aside class="qr-preview" aria-label="Generated QR voucher preview">
+              <div class="qr-inner">
+                <div class="preview-label-row" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%;margin-bottom:16px;">
+                  <span aria-hidden="true"></span>
+                  <div class="preview-label" style="margin:0;text-align:center;">QR preview</div>
+                  <div style="display:flex;justify-content:flex-end;">
+                    <button class="secondary-button icon-only-button" id="open-qr-tab" type="button" title="Open in new tab" aria-label="Open in new tab">
+                      <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="qr-box">
+                  <canvas id="qr-canvas" width="264" height="264" aria-label="Voucher QR pattern"></canvas>
+                </div>
+                <p class="preview-code" id="preview-code">Ready to generate</p>
+                <p class="preview-meta" id="preview-meta">Create a voucher to update this access card.<br /><span>Guest Wi-Fi Access</span></p>
+                <div class="qr-actions">
+                  <button class="secondary-button qr-action-button" id="large-qr-preview" type="button">
+                    <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+                    Enlarge
+                  </button>
+                  <button class="secondary-button qr-action-button" id="print-qr" type="button">Print QR</button>
+                </div>
+              </div>
+            </aside>
+          </section>
+        </section>
+
+        <section class="tab-panel" id="tab-analytics" hidden>
+          <div class="page-header">
+            <div class="page-title">
+              <h1>Analytics</h1>
+              <p>Voucher sales and plan counts by day, week, or month.</p>
+            </div>
+          </div>
+
+          <section class="card" aria-labelledby="analytics-title">
+            <div class="section-card-head analytics-head">
+              <div>
+                <h2 id="analytics-title">Voucher Analytics</h2>
+                <p id="analytics-subtitle">Sales by plan type for the selected period.</p>
+              </div>
+              <div class="analytics-controls">
+                <div class="view-toggle" role="group" aria-label="Analytics view">
+                  <button class="view-btn active" type="button" data-view="day">Day</button>
+                  <button class="view-btn" type="button" data-view="week">Week</button>
+                  <button class="view-btn" type="button" data-view="month">Month</button>
+                </div>
+                <input id="analytics-date" class="analytics-date" type="date" aria-label="Select date" />
+              </div>
+            </div>
+
+            <div class="analytics-legend" aria-label="Plan legend">
+              <span class="legend-item"><span class="legend-swatch swatch-1h"></span>1 Hour</span>
+              <span class="legend-item"><span class="legend-swatch swatch-1d"></span>1 Day</span>
+              <span class="legend-item"><span class="legend-swatch swatch-2d"></span>2 Days</span>
+            </div>
+
+            <div class="analytics-summary" aria-label="Selected day counts">
+              <div class="summary-chip"><span class="summary-dot swatch-1h"></span><strong id="count-1h">0</strong><span>1 Hour</span></div>
+              <div class="summary-chip"><span class="summary-dot swatch-1d"></span><strong id="count-1d">0</strong><span>1 Day</span></div>
+              <div class="summary-chip"><span class="summary-dot swatch-2d"></span><strong id="count-2d">0</strong><span>2 Days</span></div>
+              <div class="summary-chip summary-total"><strong id="count-total">0</strong><span id="count-total-label">Total vouchers (selected day)</span></div>
+            </div>
+
+            <div class="chart-container analytics-chart" id="revenue-chart-analytics"></div>
+            <p class="analytics-note" id="analytics-note"></p>
+          </section>
+        </section>
+
+        <section class="tab-panel" id="tab-settings" hidden>
+          <div class="page-header">
+            <div class="page-title">
+              <h1>Portal &amp; Rates</h1>
+              <p>Guest portal behaviour and voucher pricing.</p>
+            </div>
+          </div>
+
+          <section class="card" aria-labelledby="settings-title">
+            <div class="section-card-head">
+              <div>
+                <h2 id="settings-title">Access Plans</h2>
+                <p>Configured guest durations and pricing.</p>
+              </div>
+              <button class="secondary-button" id="edit-plans-btn" type="button" title="Edit plans" aria-label="Edit plans">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                <span id="edit-plans-label">Edit</span>
+              </button>
+            </div>
+            <div id="access-plans" style="padding: 20px 24px 24px; display: grid; gap: 0;">
+              <div class="plan-row" data-plan="1" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink); gap: 12px;">
+                <span>1 Hour</span>
+                <div class="plan-value">
+                  <strong class="plan-display" data-plan="1">₱5.00</strong>
+                  <span class="plan-edit-wrap" data-plan="1" hidden>₱ <input id="plan-price-1" type="number" min="0" step="1" value="5" style="width:90px;height:34px;padding:0 8px;" /></span>
+                </div>
+              </div>
+              <div class="plan-row" data-plan="24" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink); gap: 12px;">
+                <span>1 Day</span>
+                <div class="plan-value">
+                  <strong class="plan-display" data-plan="24">₱20.00</strong>
+                  <span class="plan-edit-wrap" data-plan="24" hidden>₱ <input id="plan-price-24" type="number" min="0" step="1" value="20" style="width:90px;height:34px;padding:0 8px;" /></span>
+                </div>
+              </div>
+              <div class="plan-row" data-plan="48" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink); gap: 12px;">
+                <span>2 Days</span>
+                <div class="plan-value">
+                  <strong class="plan-display" data-plan="48">₱35.00</strong>
+                  <span class="plan-edit-wrap" data-plan="48" hidden>₱ <input id="plan-price-48" type="number" min="0" step="1" value="35" style="width:90px;height:34px;padding:0 8px;" /></span>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink)">
+                <span>Custom duration</span>
+                <strong id="plan-custom-display">₱5.00 / hour</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="admin-password-title">
+            <div class="section-card-head">
+              <div>
+                <h2 id="admin-password-title">Admin Password</h2>
+                <p>Change the administrator login password.</p>
+              </div>
+            </div>
+            <form id="admin-password-form" class="form-grid" style="padding: 20px 24px 24px; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 17px;">
+              <div class="field">
+                <label for="admin-current">Current password</label>
+                <input id="admin-current" type="password" autocomplete="off" required />
+              </div>
+              <div class="field">
+                <label for="admin-new">New password</label>
+                <input id="admin-new" type="password" autocomplete="off" required />
+              </div>
+              <div class="field full">
+                <label for="admin-confirm">Confirm new password</label>
+                <input id="admin-confirm" type="password" autocomplete="off" required />
+              </div>
+              <div class="field full">
+                <button class="primary-button generate-button" type="submit">Update Password</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="card" aria-labelledby="archive-title">
+            <div class="section-card-head">
+              <div>
+                <h2 id="archive-title">Deleted Voucher Archive</h2>
+                <p>Deleted voucher codes are archived for 30 days, then permanently removed. Codes remain reserved for life.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Voucher Code</th>
+                    <th>Deleted</th>
+                    <th>Permanent deletion</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="archive-body"></tbody>
+              </table>
+            </div>
+            <div class="archive-footer">
+              <span id="archive-page-info" class="archive-page-info"></span>
+              <div class="archive-pagination">
+                <button class="secondary-button" id="archive-prev" type="button">Prev</button>
+                <button class="secondary-button" id="archive-next" type="button">Next</button>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
 
     <div class="modal-backdrop" id="edit-backdrop" role="presentation">
       <section class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-title">
         <header class="modal-header">
-          <div><p class="eyebrow">Voucher settings</p><h2 id="edit-title">Edit user access</h2></div>
+          <div>
+            <p class="eyebrow">Voucher settings</p>
+            <h2 id="edit-title">Edit user access</h2>
+          </div>
           <button class="close-button" type="button" data-close="edit-backdrop" aria-label="Close edit dialog">×</button>
         </header>
         <form id="edit-form">
           <div class="modal-body">
-            <div class="field"><label for="edit-code">Voucher Code</label><input id="edit-code" type="text" maxlength="5" minlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="characters" required /></div>
-            <div class="field"><label for="edit-password">Password</label><input id="edit-password" type="text" maxlength="4" minlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" required /></div>
+            <div class="field">
+              <label for="edit-code">Voucher Code</label>
+              <input id="edit-code" type="text" maxlength="5" minlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="characters" required />
+            </div>
+            <div class="field">
+              <label for="edit-password">Password</label>
+              <input id="edit-password" type="text" maxlength="4" minlength="4" inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" required />
+            </div>
             <div class="field">
               <span class="field-label">Access duration</span>
               <div class="modal-pills" id="edit-duration-pills">
@@ -1305,7 +2526,10 @@
     <div class="modal-backdrop" id="qr-backdrop" role="presentation">
       <section class="modal large-qr-modal" role="dialog" aria-modal="true" aria-labelledby="large-qr-title">
         <header class="modal-header">
-          <div><p class="eyebrow">Full-size access card</p><h2 id="large-qr-title">QR code preview</h2></div>
+          <div>
+            <p class="eyebrow">Full-size access card</p>
+            <h2 id="large-qr-title">QR code preview</h2>
+          </div>
           <button class="close-button" type="button" data-close="qr-backdrop" aria-label="Close large QR preview">×</button>
         </header>
         <div class="large-qr-content">
@@ -1320,17 +2544,124 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <div id="print-area" aria-hidden="true">
+      <div class="print-card">
+        <img id="print-qr-img" class="qr" alt="QR code" />
+        <div class="label">Voucher Code</div>
+        <div id="print-code" class="code"></div>
+        <div class="label">Password</div>
+        <div id="print-password" class="pw"></div>
+      </div>
+    </div>
+
+    <svg width="0" height="0" style="position: absolute; display: none;">
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" />
+      </symbol>
+      <symbol id="i-ticket" viewBox="0 0 24 24">
+        <path d="M2 9a3 3 0 0 0 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 0 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+        <path d="M13 5v2m0 4v2m0 4v2" />
+      </symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24">
+        <path d="M3 3v18h18M7 16l4-5 4 3 5-7" />
+      </symbol>
+      <symbol id="i-router" viewBox="0 0 24 24">
+        <rect x="3" y="11" width="18" height="9" rx="2" />
+        <path d="M7 15h.01M11 15h.01M16 15h2M12 11V7M8.5 7.5a5 5 0 0 1 7 0M6 5a8.5 8.5 0 0 1 12 0" />
+      </symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+        <circle cx="12" cy="12" r="3" />
+      </symbol>
+      <symbol id="i-wifi" viewBox="0 0 24 24">
+        <path d="M5 12.6a11 11 0 0 1 14 0M8.5 16a6 6 0 0 1 7 0M12 20h.01M2 9a16 16 0 0 1 20 0" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 7h16M4 12h16M4 17h16" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M18 6 6 18" />
+      </symbol>
+      <symbol id="i-coins" viewBox="0 0 24 24">
+        <ellipse cx="12" cy="6" rx="8" ry="3" />
+        <path d="M4 6v5c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </symbol>
+      <symbol id="i-power" viewBox="0 0 24 24">
+        <path d="M12 2v10M18.4 5.6a9 9 0 1 1-12.8 0" />
+      </symbol>
+    </svg>
+
     <script>
       const durationNames = { 1: "1 Hour", 24: "1 Day", 48: "2 Days" };
       const prices = { 1: 5, 24: 20, 48: 35 };
+      function loadPlanPrices() {
+        try {
+          const saved = JSON.parse(localStorage.getItem("qspot-plan-prices") || "null");
+          if (saved && typeof saved === "object") {
+            if (Number.isFinite(Number(saved[1]))) prices[1] = Number(saved[1]);
+            if (Number.isFinite(Number(saved[24]))) prices[24] = Number(saved[24]);
+            if (Number.isFinite(Number(saved[48]))) prices[48] = Number(saved[48]);
+          }
+        } catch {}
+      }
+      function savePlanPrices() {
+        try { localStorage.setItem("qspot-plan-prices", JSON.stringify(prices)); } catch {}
+      }
+      function formatPeso(value) {
+        const n = Number(value) || 0;
+        return `₱${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      }
+      function applyPlanPricesUI() {
+        [1,24,48].forEach((h) => {
+          const display = document.querySelector(`.plan-display[data-plan="${h}"]`);
+          const input = document.getElementById(`plan-price-${h}`);
+          if (display) display.textContent = `${formatPeso(prices[h])}.00`.replace('.00.00','.00');
+          if (input) input.value = prices[h];
+        });
+        const custom = document.getElementById("plan-custom-display");
+        if (custom) custom.textContent = `${formatPeso(prices[1])}.00 / hour`.replace('.00.00','.00');
+        // update generator duration pill labels
+        const pills = document.querySelectorAll('#duration-pills .duration-pill[data-hours]');
+        pills.forEach((btn) => {
+          const h = btn.dataset.hours;
+          if (h === '1') btn.textContent = `1 Hour · ₱${prices[1]}`;
+          else if (h === '24') btn.textContent = `1 Day · ₱${prices[24]}`;
+          else if (h === '48') btn.textContent = `2 Days · ₱${prices[48]}`;
+        });
+      }
       let totalSales = 0;
-      let salesVisible = false; // hidden by default; the eye toggles it
+      let salesVisible = false;
       let selectedDuration = 1;
       let editDuration = 1;
       let editingId = null;
       let toastTimer;
-
       let users = [];
+      let archivedVouchers = [];
+      let archivePage = 1;
+      const ARCHIVE_PAGE_SIZE = 10;
+      let sessions = [];
+      const tableQuery = { current: "" };
+      const analyticsState = { view: "day", date: new Date().toISOString().slice(0, 10) };
+      let planEditMode = false;
 
       async function api(url, body) {
         const response = await fetch(url, {
@@ -1364,7 +2695,7 @@
           const live = matches.find((session) => session.active && session.expires * 1000 > Date.now());
           const last = matches[0];
           const voucherExpiry = voucher.expires ? voucher.expires * 1000 : null;
-          const expiresAt = live ? live.expires * 1000 : (voucherExpiry || (last && last.expires ? last.expires * 1000 : null));
+          const expiresAt = live ? live.expires * 1000 : voucherExpiry || (last && last.expires ? last.expires * 1000 : null);
           let status = "unused";
           if (voucher.revoked) status = "expired";
           else if (live) status = "active";
@@ -1379,16 +2710,28 @@
             used: Boolean(voucher.used),
             createdAt: voucher.created * 1000,
             expiresAt,
+            device: last && last.mac ? last.mac : "",
+            startedAtMs: live ? live.started * 1000 : last && last.started ? last.started * 1000 : voucher.created * 1000,
             qr: voucher.qr || "",
             reveal: previous.get(voucher.id)?.reveal || false
           };
         });
+        archivedVouchers = (data.archived || []).map((voucher) => ({
+          id: voucher.id,
+          code: voucher.username,
+          deletedAt: (voucher.deleted_at || 0) * 1000,
+          purgeAt: ((voucher.deleted_at || 0) + 30 * 24 * 3600) * 1000
+        }));
+        archivePage = 1;
         renderTable();
+        renderArchive();
       }
 
       async function refreshData() {
         try {
-          loadUsers(await api("/api/admin/data"));
+          const data = await api("/api/admin/data");
+          sessions = data.sessions || [];
+          loadUsers(data);
         } catch (error) {
           if (/login required/i.test(error.message)) {
             window.location.href = "/";
@@ -1405,12 +2748,11 @@
         password: document.getElementById("voucher-password"),
         customTime: document.getElementById("custom-time"),
         customHours: document.getElementById("custom-hours"),
-        selectAll: document.getElementById("select-all"),
-        removeSelected: document.getElementById("remove-selected"),
         editBackdrop: document.getElementById("edit-backdrop"),
         editForm: document.getElementById("edit-form"),
         editCode: document.getElementById("edit-code"),
         editPassword: document.getElementById("edit-password"),
+        editDurationPills: document.getElementById("edit-duration-pills"),
         previewCode: document.getElementById("preview-code"),
         previewMeta: document.getElementById("preview-meta"),
         canvas: document.getElementById("qr-canvas"),
@@ -1418,13 +2760,52 @@
         largeQrTitle: document.getElementById("large-qr-title"),
         largePreviewCode: document.getElementById("large-preview-code"),
         largePreviewMeta: document.getElementById("large-preview-meta"),
+        largeQrBackdrop: document.getElementById("qr-backdrop"),
+        openQrTab: document.getElementById("open-qr-tab"),
         toggleSales: document.getElementById("toggle-sales"),
-        toast: document.getElementById("toast")
+        toast: document.getElementById("toast"),
+        adminLogout: document.getElementById("admin-logout"),
+        exportBtn: document.getElementById("exportBtn"),
+        genVoucherBtn: document.getElementById("genVoucherBtn"),
+        menuTrigger: document.getElementById("admin-menu-trigger"),
+        menuSettings: document.getElementById("menu-settings"),
+        adminPasswordForm: document.getElementById("admin-password-form"),
+        adminCurrent: document.getElementById("admin-current"),
+        adminNew: document.getElementById("admin-new"),
+        adminConfirm: document.getElementById("admin-confirm"),
+        sidebarLogout: document.getElementById("sidebar-logout"),
+        menuToggle: document.getElementById("menuToggle"),
+        searchInput: document.getElementById("table-search"),
+        sidebar: document.getElementById("sidebar"),
+        totalVouchers: document.getElementById("total-vouchers"),
+        statActive: document.getElementById("stat-active"),
+        statCollection: document.getElementById("stat-collection"),
+        statSales: document.getElementById("stat-sales"),
+        statTime: document.getElementById("stat-time"),
+        headerActive: document.getElementById("header-active"),
+        archiveBody: document.getElementById("archive-body"),
+        archivePrev: document.getElementById("archive-prev"),
+        archiveNext: document.getElementById("archive-next"),
+        archivePageInfo: document.getElementById("archive-page-info"),
+        analyticsDate: document.getElementById("analytics-date"),
+        analyticsNote: document.getElementById("analytics-note"),
+        analyticsSubtitle: document.getElementById("analytics-subtitle"),
+        count1h: document.getElementById("count-1h"),
+        count1d: document.getElementById("count-1d"),
+        count2d: document.getElementById("count-2d"),
+        countTotal: document.getElementById("count-total"),
+        countTotalLabel: document.getElementById("count-total-label"),
+        editPlansBtn: document.getElementById("edit-plans-btn"),
+        editPlansLabel: document.getElementById("edit-plans-label")
       };
 
       function escapeHTML(value) {
         return String(value).replace(/[&<>"']/g, (character) => ({
-          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
         })[character]);
       }
 
@@ -1476,51 +2857,308 @@
       }
 
       function eyeIcon() {
-        return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8"/></svg>';
+        return '<i class="bi bi-eye" aria-hidden="true"></i>';
       }
 
       function eyeOffIcon() {
-        return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M6.5 6.9A17.4 17.4 0 0 0 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.3 3.3-.7M9.9 5.2A10.3 10.3 0 0 1 12 5c6 0 9.5 6 9.5 6a17.7 17.7 0 0 1-3.4 4.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        return '<i class="bi bi-eye-slash" aria-hidden="true"></i>';
       }
 
       function trashIcon() {
-        return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        return '<i class="bi bi-trash" aria-hidden="true"></i>';
+      }
+
+      function voucherMatches(user) {
+        const query = tableQuery.current.trim().toLowerCase();
+        if (!query) return true;
+        const haystack = [user.code, user.password, user.device, user.status].join(" ").toLowerCase();
+        return haystack.includes(query);
+      }
+
+      function renderArchive() {
+        if (!elements.archiveBody) return;
+        const total = archivedVouchers.length;
+        const totalPages = Math.max(1, Math.ceil(total / ARCHIVE_PAGE_SIZE));
+        if (archivePage > totalPages) archivePage = totalPages;
+        if (archivePage < 1) archivePage = 1;
+        if (!total) {
+          elements.archiveBody.innerHTML = '<tr><td colspan="4" class="empty-state">No deleted vouchers in the archive.</td></tr>';
+        } else {
+          const start = (archivePage - 1) * ARCHIVE_PAGE_SIZE;
+          const pageItems = archivedVouchers.slice(start, start + ARCHIVE_PAGE_SIZE);
+          const now = Date.now();
+          elements.archiveBody.innerHTML = pageItems.map((item) => {
+            const msLeft = Math.max(0, item.purgeAt - now);
+            const daysLeft = Math.ceil(msLeft / 86400000);
+            const when = daysLeft <= 0 ? 'Pending removal' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
+            return `<tr>
+              <td><div class="user-cell"><span>${escapeHTML(item.code)}</span></div></td>
+              <td class="stamp-cell">${escapeHTML(formatDateTime(item.deletedAt))}</td>
+              <td class="stamp-cell">${escapeHTML(formatDateTime(item.purgeAt))}<span class="stamp-sub">${escapeHTML(when)}</span></td>
+              <td><span class="status-pill expired">Archived</span></td>
+            </tr>`;
+          }).join('');
+        }
+        if (elements.archivePageInfo) elements.archivePageInfo.textContent = total ? `Page ${archivePage} of ${totalPages} · ${total} archived` : '';
+        if (elements.archivePrev) elements.archivePrev.disabled = archivePage <= 1 || !total;
+        if (elements.archiveNext) elements.archiveNext.disabled = archivePage >= totalPages || !total;
       }
 
       function renderTable() {
-        if (!users.length) {
+        const visible = users.filter((user) => voucherMatches(user));
+        if (!visible.length) {
           elements.body.innerHTML = '<tr><td colspan="8" class="empty-state">No vouchers yet. Generate one above to get started.</td></tr>';
         } else {
-          elements.body.innerHTML = users.map((user) => `
+          elements.body.innerHTML = visible.map((user) => {
+            return `
             <tr>
-              <td><input class="row-select" type="checkbox" data-id="${user.id}" aria-label="Select ${escapeHTML(user.code)}" /></td>
               <td><div class="user-cell"><span>${escapeHTML(user.code)}</span></div></td>
-              <td><div class="password-cell"><span>${user.reveal ? escapeHTML(user.password) : "••••••••"}</span><button class="eye-button" type="button" data-action="reveal" data-id="${user.id}" aria-label="${user.reveal ? "Hide" : "Show"} password">${eyeIcon()}</button></div></td>
+              <td><div class="password-cell"><span>${user.reveal ? escapeHTML(user.password) : "\u2022\u2022\u2022\u2022\u2022\u2022"}</span><button class="eye-button" type="button" data-action="reveal" data-id="${user.id}" aria-label="${user.reveal ? "Hide" : "Show"} password">${user.reveal ? eyeOffIcon() : eyeIcon()}</button></div></td>
+              <td><div class="user-cell"><span>${escapeHTML(user.device || "\u2014")}</span></div></td>
               <td><div class="time-cell"><strong>${escapeHTML(durationLabel(user.hours))}</strong><span class="remaining-live" data-id="${user.id}">${escapeHTML(remainingExact(user))}</span></div></td>
               <td class="stamp-cell">${escapeHTML(formatDateTime(user.createdAt))}</td>
               <td class="stamp-cell">${escapeHTML(formatDateTime(user.expiresAt))}${user.status === "active" && user.expiresAt ? '<span class="stamp-sub">scheduled end</span>' : ""}</td>
               <td><span class="status-pill ${user.status}">${statusLabel(user.status)}</span></td>
               <td><div class="row-actions"><button class="ghost-button" type="button" data-action="edit" data-id="${user.id}">Edit</button><button class="ghost-button row-qr-button" type="button" data-action="qr" data-id="${user.id}" aria-label="Show QR for ${escapeHTML(user.code)}">${eyeIcon()}QR</button><button class="icon-button" type="button" data-action="remove" data-id="${user.id}" aria-label="Remove ${escapeHTML(user.code)}">${trashIcon()}</button></div></td>
             </tr>
-          `).join("");
+          `;
+          }).join("");
         }
         updateSummary();
-        syncSelectionTools();
+      }
+
+      function salesForDayOffset(offsetDays) {
+        const now = new Date();
+        const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offsetDays);
+        const start = day.getTime();
+        const end = start + 86400000;
+        return users
+          .filter((user) => user.used && user.createdAt >= start && user.createdAt < end)
+          .reduce((sum, user) => sum + priceFor(user.minutes), 0);
+      }
+
+      function updateSalesChange() {
+        const el = document.getElementById("stat-sales-change");
+        if (!el) return;
+        const today = salesForDayOffset(0);
+        const yesterday = salesForDayOffset(1);
+        el.classList.remove("neutral");
+        if (yesterday === 0) {
+          if (today === 0) {
+            el.textContent = "No sales today or yesterday";
+            el.classList.add("neutral");
+          } else {
+            el.textContent = `₱${today.toLocaleString()} today · no sales yesterday`;
+          }
+          return;
+        }
+        const diff = today - yesterday;
+        const pct = Math.round((diff / yesterday) * 100);
+        const sign = diff >= 0 ? "+" : "";
+        el.textContent = `${sign}${pct}% from yesterday`;
+        if (diff === 0) el.classList.add("neutral");
+      }
+
+      function planBucket(minutes) {
+        if (minutes <= 60) return "1h";
+        if (minutes <= 1440) return "1d";
+        if (minutes <= 2880) return "2d";
+        return "other";
+      }
+
+      function vouchersInRange(start, end) {
+        return users.filter((user) => user.used && user.createdAt >= start && user.createdAt < end);
+      }
+
+      function planCounts(list) {
+        const counts = { "1h": 0, "1d": 0, "2d": 0, total: 0 };
+        list.forEach((user) => {
+          const b = planBucket(user.minutes);
+          if (counts[b] !== undefined) counts[b] += 1;
+          counts.total += 1;
+        });
+        return counts;
+      }
+
+      function startOfDay(date) {
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      }
+
+      function renderDashboardRevenueChart() {
+        const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+        const now = new Date();
+        const days = [];
+        for (let i = 6; i >= 0; i -= 1) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          const start = d.getTime();
+          const end = start + 86400000;
+          const amount = vouchersInRange(start, end).reduce((sum, user) => sum + priceFor(user.minutes), 0);
+          days.push({ label: dayNames[d.getDay()], amount });
+        }
+        const max = Math.max(1, ...days.map((d) => d.amount));
+        const html = days.map((d) => {
+          const h = d.amount <= 0 ? 4 : Math.max(6, Math.round((d.amount / max) * 100));
+          const title = `₱${d.amount.toLocaleString()}`;
+          return `<div class="bar-column"><div class="bar" style="--h: ${h}%" title="${title}"></div><span class="bar-label">${d.label}</span></div>`;
+        }).join("");
+        const el = document.getElementById("revenue-chart-dashboard");
+        if (el) el.innerHTML = html;
+      }
+
+      function renderAnalyticsChart() {
+        const container = document.getElementById("revenue-chart-analytics");
+        if (!container) return;
+        const now = new Date();
+        const todayStr = now.toISOString().slice(0, 10);
+        let selected = new Date(analyticsState.date + "T00:00:00");
+        if (Number.isNaN(selected.getTime())) selected = new Date(todayStr + "T00:00:00");
+
+        // Enforce view-specific dates
+        if (analyticsState.view === "day") {
+          analyticsState.date = todayStr;
+          selected = new Date(todayStr + "T00:00:00");
+          if (elements.analyticsDate) { elements.analyticsDate.value = analyticsState.date; elements.analyticsDate.disabled = true; }
+        } else if (analyticsState.view === "week") {
+          const base = new Date(todayStr + "T00:00:00");
+          const day = base.getDay();
+          const diff = (day + 6) % 7;
+          base.setDate(base.getDate() - diff);
+          analyticsState.date = base.toISOString().slice(0, 10);
+          selected = base;
+          if (elements.analyticsDate) { elements.analyticsDate.value = analyticsState.date; elements.analyticsDate.disabled = true; }
+        } else {
+          if (elements.analyticsDate) elements.analyticsDate.disabled = false;
+        }
+
+        let note = "";
+        let subtitle = "";
+        container.classList.remove("calendar-mode");
+
+        if (analyticsState.view === "day") {
+          const dayStart = startOfDay(selected).getTime();
+          const list = vouchersInRange(dayStart, dayStart + 86400000);
+          const counts = planCounts(list);
+          const amounts = {
+            "1h": list.filter((u) => planBucket(u.minutes) === "1h").reduce((s,u) => s + priceFor(u.minutes), 0),
+            "1d": list.filter((u) => planBucket(u.minutes) === "1d").reduce((s,u) => s + priceFor(u.minutes), 0),
+            "2d": list.filter((u) => planBucket(u.minutes) === "2d").reduce((s,u) => s + priceFor(u.minutes), 0),
+          };
+          const bars = [
+            { key: "1h", label: "1 Hour", color: "#2563eb", count: counts["1h"], amount: amounts["1h"] },
+            { key: "1d", label: "1 Day", color: "#10b981", count: counts["1d"], amount: amounts["1d"] },
+            { key: "2d", label: "2 Days", color: "#f59e0b", count: counts["2d"], amount: amounts["2d"] },
+          ];
+          const maxCount = Math.max(1, ...bars.map((b) => b.count));
+          subtitle = `Today (${selected.toLocaleDateString()}) — plan breakdown`;
+          note = "Showing the current day (today). Each plan has its own bar, color-coded (1 Hour / 1 Day / 2 Days).";
+          container.innerHTML = bars.map((b) => {
+            const hPct = b.count <= 0 ? 4 : Math.max(6, Math.round((b.count / maxCount) * 100));
+            const title = `${b.label}: ${b.count} voucher${b.count === 1 ? "" : "s"} (₱${b.amount.toLocaleString()})`;
+            return `<div class="bar-column" title="${escapeHTML(title)}"><div class="bar" style="--h:${hPct}%; background:${b.color};"></div><span class="bar-label">${escapeHTML(b.label)}</span><span class="bar-label" style="margin-top:2px;font-weight:700;color:var(--ink)">${b.count}</span></div>`;
+          }).join("");
+        } else if (analyticsState.view === "week") {
+          const day = selected.getDay();
+          const diff = (day + 6) % 7;
+          const monday = new Date(selected);
+          monday.setDate(selected.getDate() - diff);
+          const names = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+          const periods = [];
+          for (let i = 0; i < 7; i += 1) {
+            const d = new Date(monday); d.setDate(monday.getDate() + i);
+            const start = startOfDay(d).getTime();
+            periods.push({ label: names[i], start, end: start + 86400000, date: d });
+          }
+          const endWeek = new Date(monday); endWeek.setDate(monday.getDate() + 6);
+          subtitle = `Current week (${monday.toLocaleDateString()} - ${endWeek.toLocaleDateString()})`;
+          note = "Showing the current week (Mon–Sun). Bars are color-coded by plan.";
+          const periodData = periods.map((p) => {
+            const list = vouchersInRange(p.start, p.end);
+            const byPlan = { "1h": 0, "1d": 0, "2d": 0 };
+            list.forEach((user) => { const b = planBucket(user.minutes); if (byPlan[b] !== undefined) byPlan[b] += priceFor(user.minutes); });
+            const total = byPlan["1h"] + byPlan["1d"] + byPlan["2d"];
+            return { ...p, byPlan, total, counts: planCounts(list) };
+          });
+          const max = Math.max(1, ...periodData.map((p) => p.total));
+          container.innerHTML = periodData.map((p) => {
+            const hPct = p.total <= 0 ? 4 : Math.max(6, Math.round((p.total / max) * 100));
+            const seg = (key, cls) => { const val = p.byPlan[key]; if (val <= 0) return ""; const sh = (val / (p.total || 1)) * 100; return `<span class="seg ${cls}" style="height:${sh}%" title="${key === "1h" ? "1 Hour" : key === "1d" ? "1 Day" : "2 Days"}: ₱${val.toLocaleString()}"></span>`; };
+            const title = `${p.date.toLocaleDateString()} — 1h: ${p.counts["1h"]} · 1d: ${p.counts["1d"]} · 2d: ${p.counts["2d"]}`;
+            return `<div class="bar-column" title="${escapeHTML(title)}"><div class="stacked-bar" style="--h:${hPct}%">${seg("1h","seg-1h")}${seg("1d","seg-1d")}${seg("2d","seg-2d")}</div><span class="bar-label">${escapeHTML(p.label)}</span></div>`;
+          }).join("");
+        } else {
+          container.classList.add("calendar-mode");
+          const first = new Date(selected.getFullYear(), selected.getMonth(), 1);
+          const last = new Date(selected.getFullYear(), selected.getMonth() + 1, 0);
+          subtitle = `Monthly calendar — ${first.toLocaleString(undefined, { month: "long", year: "numeric" })}`;
+          note = "Showing the whole month in calendar view. Colored badges show counts per plan for each day (1 Hour / 1 Day / 2 Days).";
+          const heads = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d) => `<div class="month-cal-head">${d}</div>`).join("");
+          let offset = (first.getDay() + 6) % 7; // Monday start
+          let cells = "";
+          for (let i = 0; i < offset; i += 1) cells += `<div class="month-cell empty"></div>`;
+          for (let d = 1; d <= last.getDate(); d += 1) {
+            const dayDate = new Date(selected.getFullYear(), selected.getMonth(), d);
+            const start = startOfDay(dayDate).getTime();
+            const counts = planCounts(vouchersInRange(start, start + 86400000));
+            const isSelected = dayDate.toISOString().slice(0,10) === analyticsState.date;
+            const badges = [
+              counts["1h"] ? `<span class="plan-badge b1h" title="1 Hour">${counts["1h"]}</span>` : "",
+              counts["1d"] ? `<span class="plan-badge b1d" title="1 Day">${counts["1d"]}</span>` : "",
+              counts["2d"] ? `<span class="plan-badge b2d" title="2 Days">${counts["2d"]}</span>` : ""
+            ].join("");
+            cells += `<div class="month-cell${isSelected ? " selected" : ""}" data-day="${dayDate.toISOString().slice(0,10)}" title="${dayDate.toLocaleDateString()} — 1h: ${counts["1h"]}, 1d: ${counts["1d"]}, 2d: ${counts["2d"]}">
+              <div class="month-day">${d}</div>
+              <div class="month-badges">${badges || ""}</div>
+              <div class="month-total">${counts.total ? counts.total + " voucher" + (counts.total===1?"":"s") : ""}</div>
+            </div>`;
+          }
+          container.innerHTML = `<div class="month-calendar">${heads}${cells}</div>`;
+          // click to select day for summary counts
+          container.querySelectorAll(".month-cell[data-day]").forEach((cell) => {
+            cell.style.cursor = "pointer";
+            cell.addEventListener("click", () => {
+              analyticsState.date = cell.dataset.day;
+              if (elements.analyticsDate) elements.analyticsDate.value = analyticsState.date;
+              renderAnalyticsChart();
+            });
+          });
+        }
+
+        // Selected day counts (for analyticsState.date)
+        const countDate = new Date(analyticsState.date + "T00:00:00");
+        const dayStart = startOfDay(Number.isNaN(countDate.getTime()) ? selected : countDate).getTime();
+        const dayCounts = planCounts(vouchersInRange(dayStart, dayStart + 86400000));
+        if (elements.count1h) elements.count1h.textContent = dayCounts["1h"];
+        if (elements.count1d) elements.count1d.textContent = dayCounts["1d"];
+        if (elements.count2d) elements.count2d.textContent = dayCounts["2d"];
+        if (elements.countTotal) elements.countTotal.textContent = dayCounts.total;
+        if (elements.analyticsNote) elements.analyticsNote.textContent = note;
+        if (elements.analyticsSubtitle) elements.analyticsSubtitle.textContent = subtitle;
+      }
+
+      function renderRevenueCharts() {
+        renderDashboardRevenueChart();
+        renderAnalyticsChart();
       }
 
       function updateSummary() {
         const active = users.filter((user) => user.status === "active" && (!user.expiresAt || user.expiresAt > Date.now())).length;
         totalSales = users.filter((user) => user.used).reduce((sum, user) => sum + priceFor(user.minutes), 0);
-        document.getElementById("total-vouchers").textContent = users.length;
-        document.getElementById("active-users").textContent = active;
-        document.getElementById("header-active").textContent = active;
+        const soldMinutes = users.filter((user) => user.used).reduce((sum, user) => sum + user.minutes, 0);
+        if (elements.totalVouchers) elements.totalVouchers.textContent = users.length;
+        if (elements.statActive) elements.statActive.textContent = active;
+        if (elements.headerActive) elements.headerActive.textContent = active;
+        if (elements.statCollection) elements.statCollection.textContent = `₱${totalSales.toLocaleString()}`;
+        if (elements.statSales) elements.statSales.textContent = `₱${totalSales.toLocaleString()}`;
+        if (elements.statTime) elements.statTime.textContent = `${Math.max(0, Math.round(soldMinutes / 60))} hrs`;
         updateSales();
+        updateSalesChange();
+        renderRevenueCharts();
       }
 
       function updateSales() {
-        document.getElementById("total-sales").textContent = salesVisible
-          ? `₱${totalSales.toLocaleString()}`
-          : "₱••••";
+        if (!elements.toggleSales) return;
+        const salesElement = elements.toggleSales.closest(".stat-card")?.querySelector(".stat-value");
+        if (salesElement) salesElement.textContent = salesVisible ? `₱${totalSales.toLocaleString()}` : "₱••••";
         elements.toggleSales.innerHTML = salesVisible ? eyeIcon() : eyeOffIcon();
         elements.toggleSales.setAttribute("aria-label", salesVisible ? "Hide total sales" : "Show total sales");
         elements.toggleSales.setAttribute("aria-pressed", String(salesVisible));
@@ -1608,7 +3246,34 @@
         image.src = url;
       }
 
+      function exportLogs() {
+        const header = ["Voucher Code", "Password", "Device", "Assigned / Remaining", "Created", "Ended", "Status"];
+        const rows = users.map((user) => [
+          user.code,
+          user.password,
+          user.device || "",
+          durationLabel(user.hours),
+          formatDateTime(user.createdAt),
+          formatDateTime(user.expiresAt),
+          statusLabel(user.status)
+        ]);
+        const escapeCell = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const bodyRows = rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeCell(cell)}</td>`).join("")}</tr>`).join("");
+        const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><title>Q-Spot Export</title></head><body><table border="1">${`<tr>${header.map((h) => `<th>${escapeCell(h)}</th>`).join("")}</tr>`}${bodyRows}</table></body></html>`;
+        const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `qspot-export-${new Date().toISOString().slice(0, 10)}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast("Exported the voucher report as an Excel file.");
+      }
+
       function showToast(message) {
+        if (!elements.toast) return;
         clearTimeout(toastTimer);
         elements.toast.textContent = message;
         elements.toast.classList.add("show");
@@ -1616,20 +3281,67 @@
       }
 
       function setDuration(container, hours) {
+        if (!container) return;
         container.querySelectorAll(".duration-pill").forEach((button) => {
           button.classList.toggle("active", String(button.dataset.hours) === String(hours));
         });
       }
 
       function openModal(element) {
+        if (!element) return;
         element.classList.add("open");
         document.body.style.overflow = "hidden";
         setTimeout(() => element.querySelector("input, button")?.focus(), 0);
       }
 
       function closeModal(element) {
+        if (!element) return;
         element.classList.remove("open");
         document.body.style.overflow = "";
+      }
+
+      function openQrInNewTab() {
+        const code = (elements.previewCode.textContent || "").trim();
+        if (!code || /ready to generate/i.test(code)) {
+          showToast("Generate a voucher first to open its QR card.");
+          return;
+        }
+        const qrDataUrl = elements.canvas.toDataURL("image/png");
+        const metaText = (elements.previewMeta.innerText || "").replace(/\s+/g, " ").trim();
+        const logoUrl = new URL("/images/logo_qspot.png", window.location.origin).href;
+        const safeCode = escapeHTML(code);
+        const safeMeta = escapeHTML(metaText);
+        const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Q-Spot Voucher ${safeCode}</title><link rel="icon" type="image/png" href="${logoUrl}" />
+<style>
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f8fafc;color:#0f172a;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 20px 50px rgba(15,23,42,.12);padding:28px;max-width:420px;width:100%;text-align:center}
+  .logo{width:72px;height:72px;object-fit:contain;border-radius:16px;margin:0 auto 12px;display:block}
+  h1{margin:0 0 4px;font-size:22px;letter-spacing:-.02em}
+  .sub{margin:0 0 18px;color:#64748b;font-size:13px}
+  .qr{width:280px;height:280px;max-width:100%;image-rendering:pixelated;border:1px solid #e2e8f0;border-radius:16px;padding:12px;background:#fff}
+  .code{margin:16px 0 6px;font-size:28px;font-weight:800;letter-spacing:.08em}
+  .meta{margin:0;color:#334155;font-size:14px;line-height:1.6;white-space:pre-line}
+  .foot{margin-top:18px;padding-top:14px;border-top:1px dashed #e2e8f0;color:#64748b;font-size:12px}
+  @media print{body{background:#fff;padding:0}.card{box-shadow:none;border:0}}
+</style></head><body>
+<div class="card">
+  <img class="logo" src="${logoUrl}" alt="Q-Spot logo" />
+  <h1>Q-Spot Wi-Fi</h1>
+  <p class="sub">Guest Access Voucher</p>
+  <img class="qr" src="${qrDataUrl}" alt="QR code for ${safeCode}" />
+  <div class="code">${safeCode}</div>
+  <p class="meta">${safeMeta}</p>
+  <div class="foot">Scan the QR code or sign in with the voucher code and password.</div>
+</div>
+</body></html>`;
+        const win = window.open("", "_blank");
+        if (!win) {
+          showToast("Pop-up blocked. Allow pop-ups to open the QR in a new tab.");
+          return;
+        }
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
       }
 
       function syncLargeQrPreview() {
@@ -1642,13 +3354,19 @@
         elements.largePreviewMeta.innerHTML = elements.previewMeta.innerHTML;
       }
 
-      document.getElementById("auto-generate").addEventListener("click", randomCode);
-      elements.code.addEventListener("input", () => {
-        elements.code.value = elements.code.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
-      });
-      elements.password.addEventListener("input", () => {
-        elements.password.value = elements.password.value.replace(/[^0-9]/g, "").slice(0, 4);
-      });
+      function switchTab(tabName) {
+        document.querySelectorAll(".nav-link").forEach((link) => {
+          link.classList.toggle("active", link.dataset.tab === tabName);
+        });
+        document.querySelectorAll(".tab-panel").forEach((panel) => {
+          panel.hidden = panel.id !== `tab-${tabName}`;
+        });
+        if (window.innerWidth <= 768) {
+          elements.sidebar.classList.remove("open");
+        }
+      }
+
+      // Voucher code/password are auto-generated (no manual entry).
       elements.editCode.addEventListener("input", () => {
         elements.editCode.value = elements.editCode.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5);
       });
@@ -1695,6 +3413,7 @@
           selectedDuration = 1;
           setDuration(document.getElementById("duration-pills"), 1);
           elements.customTime.classList.remove("visible");
+          randomCode();
         } catch (error) {
           showToast(error.message);
         } finally {
@@ -1717,7 +3436,7 @@
           editDuration = user.hours;
           elements.editCode.value = user.code;
           elements.editPassword.value = user.password;
-          setDuration(document.getElementById("edit-duration-pills"), [1, 24, 48].includes(user.hours) ? user.hours : null);
+          setDuration(elements.editDurationPills, [1, 24, 48].includes(user.hours) ? user.hours : null);
           openModal(elements.editBackdrop);
         }
         if (button.dataset.action === "qr") {
@@ -1725,12 +3444,12 @@
           elements.largeQrTitle.textContent = `QR code · ${user.code}`;
           elements.largePreviewCode.textContent = user.code;
           elements.largePreviewMeta.innerHTML = `Password: <span>${escapeHTML(user.password)}</span> · ${escapeHTML(durationLabel(user.hours))}<br><span>${escapeHTML(remainingExact(user))}</span>`;
-          openModal(document.getElementById("qr-backdrop"));
+          openModal(elements.largeQrBackdrop);
         }
-        if (button.dataset.action === "remove" && confirm(`Remove ${user.code} and disconnect this voucher?`)) {
+        if (button.dataset.action === "remove" && confirm(`Delete ${user.code}? It will be archived for 30 days (code remains reserved for life) and any active session will be disconnected.`)) {
           try {
             await api("/api/admin/delete", { id: user.id });
-            showToast(`${user.code} was removed.`);
+            showToast(`${user.code} was moved to the archive.`);
             await refreshData();
           } catch (error) {
             showToast(error.message);
@@ -1738,11 +3457,11 @@
         }
       });
 
-      document.getElementById("edit-duration-pills").addEventListener("click", (event) => {
+      elements.editDurationPills.addEventListener("click", (event) => {
         const button = event.target.closest(".duration-pill");
         if (!button) return;
         editDuration = Number(button.dataset.hours);
-        setDuration(document.getElementById("edit-duration-pills"), editDuration);
+        setDuration(elements.editDurationPills, editDuration);
       });
 
       elements.editForm.addEventListener("submit", async (event) => {
@@ -1770,51 +3489,41 @@
         }
       });
 
-      function selectedIds() {
-        return [...document.querySelectorAll(".row-select:checked")].map((checkbox) => Number(checkbox.dataset.id));
-      }
-
-      function syncSelectionTools() {
-        const selected = selectedIds();
-        elements.removeSelected.classList.toggle("visible", selected.length > 0);
-        elements.removeSelected.textContent = `Remove selected${selected.length ? ` (${selected.length})` : ""}`;
-        elements.selectAll.checked = users.length > 0 && selected.length === users.length;
-        elements.selectAll.indeterminate = selected.length > 0 && selected.length < users.length;
-      }
-
-      elements.body.addEventListener("change", (event) => {
-        if (event.target.classList.contains("row-select")) syncSelectionTools();
-      });
-
-      elements.selectAll.addEventListener("change", () => {
-        document.querySelectorAll(".row-select").forEach((checkbox) => {
-          checkbox.checked = elements.selectAll.checked;
-        });
-        syncSelectionTools();
-      });
-
-      elements.removeSelected.addEventListener("click", async () => {
-        const ids = selectedIds();
-        if (ids.length && confirm(`Remove ${ids.length} selected voucher${ids.length > 1 ? "s" : ""}?`)) {
-          try {
-            await Promise.all(ids.map((id) => api("/api/admin/delete", { id })));
-            showToast(`${ids.length} voucher${ids.length > 1 ? "s were" : " was"} removed.`);
-            await refreshData();
-          } catch (error) {
-            showToast(error.message);
-          }
-        }
-      });
-
       elements.toggleSales.addEventListener("click", () => {
         salesVisible = !salesVisible;
         updateSales();
       });
+      if (elements.openQrTab) elements.openQrTab.addEventListener("click", openQrInNewTab);
       document.getElementById("large-qr-preview").addEventListener("click", () => {
         syncLargeQrPreview();
-        openModal(document.getElementById("qr-backdrop"));
+        openModal(elements.largeQrBackdrop);
       });
-      document.getElementById("print-qr").addEventListener("click", () => window.print());
+      function printVoucherQr() {
+        const code = (elements.previewCode.textContent || "").trim();
+        if (!code || /ready to generate/i.test(code)) {
+          showToast("Generate a voucher first to print its QR code.");
+          return;
+        }
+        const qrDataUrl = elements.canvas.toDataURL("image/png");
+        const metaText = (elements.previewMeta.innerText || "").replace(/\s+/g, " ").trim();
+        let password = "";
+        const m = metaText.match(/Password:\s*([^\s·]+)/i);
+        if (m) password = m[1];
+        const qrImg = document.getElementById("print-qr-img");
+        const codeEl = document.getElementById("print-code");
+        const passEl = document.getElementById("print-password");
+        if (qrImg) qrImg.src = qrDataUrl;
+        if (codeEl) codeEl.textContent = code;
+        if (passEl) passEl.textContent = password || "—";
+        const prevTitle = document.title;
+        document.title = "Q-Spot Hotspot";
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => { document.title = prevTitle; }, 500);
+        }, 50);
+      }
+
+      document.getElementById("print-qr").addEventListener("click", printVoucherQr);
 
       document.querySelectorAll("[data-close]").forEach((button) => {
         button.addEventListener("click", () => closeModal(document.getElementById(button.dataset.close)));
@@ -1832,7 +3541,48 @@
         }
       });
 
-      document.getElementById("admin-logout").addEventListener("click", async () => {
+      document.getElementById("menuToggle").addEventListener("click", () => {
+        elements.sidebar.classList.toggle("open");
+      });
+
+      document.querySelectorAll(".nav-link").forEach((link) => {
+        link.addEventListener("click", () => switchTab(link.dataset.tab));
+      });
+
+      elements.searchInput.addEventListener("input", (event) => {
+        tableQuery.current = event.target.value;
+        renderTable();
+      });
+
+      const menuTrigger = elements.menuTrigger;
+      const menu = document.getElementById("admin-menu");
+      let menuOpen = false;
+      menu.classList.add("closed");
+
+      function closeMenu() {
+        menuOpen = false;
+        menu.classList.add("closed");
+        menuTrigger.setAttribute("aria-expanded", "false");
+      }
+
+      menuTrigger.addEventListener("click", (event) => {
+        event.stopPropagation();
+        menuOpen = !menuOpen;
+        menu.classList.toggle("closed", !menuOpen);
+        menuTrigger.setAttribute("aria-expanded", String(menuOpen));
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!event.target.closest(".admin-menu")) closeMenu();
+      });
+
+      elements.menuSettings.addEventListener("click", () => {
+        closeMenu();
+        switchTab("settings");
+      });
+
+      elements.adminLogout.addEventListener("click", async () => {
+        closeMenu();
         try {
           await fetch("/api/admin/logout", { method: "POST" });
         } finally {
@@ -1840,13 +3590,123 @@
         }
       });
 
+      elements.sidebarLogout.addEventListener("click", async () => {
+        try {
+          await fetch("/api/admin/logout", { method: "POST" });
+        } finally {
+          window.location.href = "/";
+        }
+      });
+
+      elements.adminPasswordForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const current = elements.adminCurrent.value;
+        const next = elements.adminNew.value;
+        const confirmValue = elements.adminConfirm.value;
+        if (!current || !next || next.length < 4) {
+          showToast("Enter the current password and a new password of at least 4 characters.");
+          return;
+        }
+        if (next !== confirmValue) {
+          showToast("New passwords do not match.");
+          return;
+        }
+        try {
+          await api("/api/admin/password", { current, new: next, confirm: confirmValue });
+          showToast("Admin password was updated.");
+          elements.adminPasswordForm.reset();
+        } catch (error) {
+          showToast(error.message);
+        }
+      });
+
+
+
+      // Archive pagination
+      if (elements.archivePrev) elements.archivePrev.addEventListener("click", () => { archivePage -= 1; renderArchive(); });
+      if (elements.archiveNext) elements.archiveNext.addEventListener("click", () => { archivePage += 1; renderArchive(); });
+
+      // Access plans edit/check
+      function setPlanEditMode(on) {
+        planEditMode = on;
+        document.querySelectorAll(".plan-display").forEach((el) => { el.hidden = on; });
+        document.querySelectorAll(".plan-edit-wrap").forEach((el) => { el.hidden = !on; });
+        if (elements.editPlansLabel) elements.editPlansLabel.textContent = on ? "Save" : "Edit";
+        if (elements.editPlansBtn) {
+          const icon = elements.editPlansBtn.querySelector("i");
+          if (icon) icon.className = on ? "bi bi-check-lg" : "bi bi-pencil-square";
+          elements.editPlansBtn.title = on ? "Save plans" : "Edit plans";
+          elements.editPlansBtn.setAttribute("aria-label", on ? "Save plans" : "Edit plans");
+        }
+      }
+      if (elements.editPlansBtn) {
+        elements.editPlansBtn.addEventListener("click", () => {
+          if (!planEditMode) { setPlanEditMode(true); return; }
+          [1,24,48].forEach((h) => {
+            const input = document.getElementById(`plan-price-${h}`);
+            if (input) {
+              const v = Math.max(0, Number(input.value || 0));
+              if (Number.isFinite(v)) prices[h] = v;
+            }
+          });
+          savePlanPrices();
+          applyPlanPricesUI();
+          setPlanEditMode(false);
+          updateSummary();
+          renderTable();
+          showToast("Access plan prices updated.");
+        });
+      }
+      loadPlanPrices();
+      applyPlanPricesUI();
+
+      // Analytics controls
+      function syncAnalyticsSummaryLabel() {
+        if (!elements.countTotalLabel) return;
+        if (analyticsState.view === "day") elements.countTotalLabel.textContent = "Total vouchers (today)";
+        else if (analyticsState.view === "week") elements.countTotalLabel.textContent = "Total vouchers (selected day)";
+        else elements.countTotalLabel.textContent = "Total vouchers (selected day)";
+      }
+      if (elements.analyticsDate) {
+        elements.analyticsDate.value = analyticsState.date;
+        elements.analyticsDate.addEventListener("change", (event) => {
+          if (event.target.value) {
+            analyticsState.date = event.target.value;
+            syncAnalyticsSummaryLabel();
+            renderAnalyticsChart();
+          }
+        });
+      }
+      document.querySelectorAll(".view-btn[data-view]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.view === analyticsState.view);
+        btn.addEventListener("click", () => {
+          analyticsState.view = btn.dataset.view;
+          if (analyticsState.view === "month" && elements.analyticsDate) {
+            // default to current month context but keep selectable
+            const now = new Date();
+            if (!analyticsState.date) analyticsState.date = now.toISOString().slice(0,10);
+          }
+          document.querySelectorAll(".view-btn[data-view]").forEach((b) => b.classList.toggle("active", b === btn));
+          syncAnalyticsSummaryLabel();
+          renderAnalyticsChart();
+        });
+      });
+      syncAnalyticsSummaryLabel();
+
+      elements.exportBtn.addEventListener("click", () => exportLogs());
+
+      elements.genVoucherBtn.addEventListener("click", () => switchTab("vouchers"));
+
+      document.addEventListener("click", (event) => {
+        const actionButton = event.target.closest(".action-item");
+        if (actionButton) showToast("Client session terminated");
+      });
+
       randomCode();
-      drawQrPattern("wifi-admin-ready");
       renderTable();
       refreshData();
       setInterval(refreshData, 5000);
-
-      function tickTable() {
+      setInterval(() => {
         let structuralChange = false;
         users.forEach((user) => {
           if ((user.status === "active" || user.status === "ready") && user.expiresAt && user.expiresAt <= Date.now()) {
@@ -1856,14 +3716,10 @@
           const remaining = document.querySelector(`.remaining-live[data-id="${user.id}"]`);
           if (remaining) remaining.textContent = remainingExact(user);
         });
-        if (structuralChange) {
-          renderTable();
-        } else {
-          updateSummary();
-        }
-      }
-
-      setInterval(tickTable, 1000);
+        if (structuralChange) renderTable();
+        else updateSummary();
+        renderArchive();
+      }, 1000);
     </script>
   </body>
 </html>

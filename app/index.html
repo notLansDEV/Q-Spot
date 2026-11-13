@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#eef4ff" />
     <title>Q-Spot — Guest Wi-Fi</title>
+    <link rel="icon" type="image/png" href="/images/logo_qspot.png" />
     <style>
       :root {
         color-scheme: light;
@@ -80,19 +81,27 @@
 
       .brand-icon {
         display: grid;
-        width: 52px;
-        height: 52px;
+        width: 96px;
+        height: 96px;
         margin: 0 auto 14px;
         place-items: center;
-        border-radius: 15px;
+        border-radius: 22px;
         color: #fff;
-        background: linear-gradient(145deg, #3468e8, #2453c8);
-        box-shadow: 0 9px 22px rgba(40, 88, 214, 0.25);
+        background: transparent;
+        box-shadow: none;
       }
 
       .brand-icon svg {
-        width: 29px;
-        height: 29px;
+        width: 52px;
+        height: 52px;
+      }
+
+      .brand-icon img {
+        width: 96px;
+        height: 96px;
+        display: block;
+        border-radius: 22px;
+        object-fit: contain;
       }
 
       h1 {
@@ -430,12 +439,18 @@
 
         .portal-header {
           padding: 27px 24px 23px;
+          text-align: center;
         }
 
         .brand-icon {
-          width: 48px;
-          height: 48px;
-          margin-bottom: 12px;
+          width: 80px;
+          height: 80px;
+          margin: 0 auto 12px;
+        }
+
+        .brand-icon img {
+          width: 80px;
+          height: 80px;
         }
 
         .login-options {
@@ -491,12 +506,7 @@
       <section class="portal-card" aria-labelledby="portal-title">
         <header class="portal-header">
           <div class="brand-icon" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none">
-              <path d="M4.5 12.7a17.2 17.2 0 0 1 23 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
-              <path d="M8.5 17.1a11.4 11.4 0 0 1 15 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
-              <path d="M12.7 21.4a5.4 5.4 0 0 1 6.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
-              <circle cx="16" cy="25.5" r="1.65" fill="currentColor" />
-            </svg>
+            <img src="/images/logo_qspot.png" alt="Q-Spot" />
           </div>
           <h1 id="portal-title">Q-Spot</h1>
           <p class="subtitle">Fast, simple guest Wi-Fi access. Sign in with your voucher or scan a QR code.</p>
@@ -506,7 +516,7 @@
           <section class="option-panel" aria-labelledby="credentials-title">
             <p class="option-kicker">Option 1</p>
             <h2 id="credentials-title">Sign in with credentials</h2>
-            <p class="option-description">Enter your short voucher code. Admin credentials use this same form.</p>
+            <p class="option-description">Enter your short voucher code.</p>
 
             <form id="login-form">
               <div class="field-group">

@@ -13,11 +13,13 @@ GATEWAY = os.environ.get("GATEWAY_IP", "10.42.0.1")
 SUBNET = ".".join(GATEWAY.split(".")[:3]) + ".0/24"
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "")
+ADMIN_PASS_OVERRIDE = None  # runtime admin password override (set by /api/admin/password)
 AP_IFACE = os.environ.get("AP_IFACE", "qspot0")
 UPLINK = os.environ.get("UPLINK", "")
 HTML_FILE = ROOT / "app" / "index.html"
 STATUS_FILE = ROOT / "app" / "status.html"
 ADMIN_FILE = ROOT / "app" / "admin.html"
+LOGO_FILE = ROOT / "app" / "images" / "logo_qspot.png"
 TERMS_FILE = ROOT / "app" / "Terms_&_Privacy.html"
 ADMIN_SESSIONS = {}
 BYPASS_COMMENT = "qspot-client"
@@ -53,6 +55,8 @@ def init_db():
                 (SELECT s.ip FROM sessions s WHERE s.username=vouchers.username
                  ORDER BY s.id DESC LIMIT 1), '')
                 WHERE used=1""")
+        if "deleted_at" not in columns:
+            c.execute("ALTER TABLE vouchers ADD COLUMN deleted_at REAL NOT NULL DEFAULT 0")
 
 def run_cmd(args):
     try:
@@ -298,12 +302,17 @@ def expire_worker():
             for row in rows:
                 c.execute("UPDATE sessions SET active=0 WHERE id=?", (row["id"],))
                 block_ip(row["ip"])
+        try:
+            purge_deleted_vouchers()
+        except Exception as e:
+            print(f"Q-Spot: voucher archive purge failed: {e}", flush=True)
 
 def enforce_worker():
     while True:
         time.sleep(10)
         try:
             ensure_portal_firewall()
+            purge_deleted_vouchers()
             now = time.time()
             with db() as c:
                 rows = c.execute("SELECT DISTINCT ip FROM sessions WHERE active=1 AND expires>?", (now,)).fetchall()
@@ -318,6 +327,19 @@ def random_code(n=5):
 
 def random_pin(n=4):
     return "".join(secrets.choice(string.digits) for _ in range(n))
+
+def purge_deleted_vouchers():
+    """Permanently remove vouchers archived (deleted) more than 30 days ago."""
+    cutoff = time.time() - 30 * 24 * 3600
+    with db() as c:
+        rows = c.execute("SELECT id FROM vouchers WHERE deleted_at > 0 AND deleted_at <= ?", (cutoff,)).fetchall()
+        for row in rows:
+            c.execute("DELETE FROM vouchers WHERE id=?", (row["id"],))
+            qr = QR_DIR / f"qspot-{row['id']}.png"
+            try:
+                qr.unlink()
+            except OSError:
+                pass
 
 def create_voucher(minutes, username="", password=""):
     username = str(username).strip().upper()
@@ -334,6 +356,11 @@ def create_voucher(minutes, username="", password=""):
         token = secrets.token_urlsafe(24)
         try:
             with db() as c:
+                # Voucher codes must be unique for life (including archived/deleted).
+                if c.execute("SELECT 1 FROM vouchers WHERE username=?", (user,)).fetchone():
+                    if username:
+                        raise ValueError("That voucher code is already in use or archived.")
+                    continue
                 cur = c.execute("INSERT INTO vouchers(username,password,token,minutes,created) VALUES(?,?,?,?,?)",
                                 (user,passwd,token,minutes,time.time()))
                 vid = cur.lastrowid
@@ -345,7 +372,7 @@ def create_voucher(minutes, username="", password=""):
             return {"id":vid,"username":user,"password":passwd,"minutes":minutes,"url":url,"qr":str(png) if png else ""}
         except sqlite3.IntegrityError:
             if username:
-                raise ValueError("That voucher code is already in use.")
+                raise ValueError("That voucher code is already in use or archived.")
             continue
     raise RuntimeError("Could not generate a unique voucher.")
 
@@ -422,13 +449,19 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(status)
         elif path == "/api/admin/data":
             if not self.admin_ok(): return self.send_json({"error":"Admin login required."},401)
+            purge_deleted_vouchers()
             with db() as c:
                 sessions = [dict(x) for x in c.execute("SELECT id,username,ip,mac,started,expires,active FROM sessions ORDER BY started DESC LIMIT 50")]
-                vouchers = [dict(x) for x in c.execute("SELECT id,username,password,minutes,created,used,revoked,expires,bound FROM vouchers ORDER BY id DESC LIMIT 100")]
+                vouchers = [dict(x) for x in c.execute(
+                    "SELECT id,username,password,minutes,created,used,revoked,expires,bound,deleted_at FROM vouchers WHERE deleted_at=0 ORDER BY id DESC LIMIT 200"
+                )]
+                archived = [dict(x) for x in c.execute(
+                    "SELECT id,username,password,minutes,created,used,revoked,expires,bound,deleted_at FROM vouchers WHERE deleted_at>0 ORDER BY deleted_at DESC LIMIT 200"
+                )]
             for voucher in vouchers:
                 qr = QR_DIR / f"qspot-{voucher['id']}.png"
                 voucher["qr"] = f"/qr/{qr.name}" if qr.exists() else ""
-            self.send_json({"sessions":sessions,"vouchers":vouchers})
+            self.send_json({"sessions":sessions,"vouchers":vouchers,"archived":archived})
         elif path == "/api/diag":
             if client_ip(self) not in ("127.0.0.1", "::1"):
                 return self.send_json({"error":"Not found"},404)
@@ -472,23 +505,34 @@ class Handler(BaseHTTPRequestHandler):
             p = QR_DIR / name
             if not p.exists(): return self.send_json({"error":"Not found"},404)
             raw=p.read_bytes(); self.send_response(200); self.send_header("Content-Type","image/png"); self.send_header("Content-Length",str(len(raw))); self.end_headers(); self.wfile.write(raw)
+        elif path == "/images/logo_qspot.png":
+            logo = LOGO_FILE
+            if not logo.exists(): return self.send_json({"error":"Not found"},404)
+            logo_bytes = logo.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type","image/png")
+            self.send_header("Content-Length",str(len(logo_bytes)))
+            self.end_headers()
+            self.wfile.write(logo_bytes)
         else:
             self.send_response(302)
             self.send_header("Location", f"http://{GATEWAY}:{PORT}/")
             self.send_header("Cache-Control", "no-store")
             self.end_headers()
     def do_POST(self):
+        global ADMIN_PASS_OVERRIDE
         path = urlparse(self.path).path
         if path == "/api/login":
             try: data=json_body(self)
             except Exception: return self.send_json({"error":"Invalid request."},400)
             user=str(data.get("username","")).strip()
             pw=str(data.get("password",""))
-            if hmac.compare_digest(user,ADMIN_USER) and hmac.compare_digest(pw,ADMIN_PASS):
+            admin_pass = ADMIN_PASS_OVERRIDE or ADMIN_PASS
+            if hmac.compare_digest(user,ADMIN_USER) and hmac.compare_digest(pw,admin_pass):
                 sid=secrets.token_urlsafe(32); ADMIN_SESSIONS[sid]=time.time()+8*3600
                 return self.send_json({"redirect":"/admin.html"},headers={"Set-Cookie":f"qspot_admin={sid}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800"})
             with db() as c:
-                v=c.execute("SELECT * FROM vouchers WHERE username=? AND password=? AND revoked=0",(user.upper(),pw)).fetchone()
+                v=c.execute("SELECT * FROM vouchers WHERE username=? AND password=? AND revoked=0 AND deleted_at=0",(user.upper(),pw)).fetchone()
             if not v: return self.send_json({"error":"Wrong username or password."},401)
             if int(v["used"]) and float(v["expires"] or 0) <= time.time():
                 return self.send_json({"error":"This voucher has expired."},401)
@@ -503,7 +547,7 @@ class Handler(BaseHTTPRequestHandler):
             except Exception: return self.send_json({"error":"Invalid request."},400)
             token=str(data.get("token",""))
             with db() as c:
-                v=c.execute("SELECT * FROM vouchers WHERE token=? AND revoked=0",(token,)).fetchone()
+                v=c.execute("SELECT * FROM vouchers WHERE token=? AND revoked=0 AND deleted_at=0",(token,)).fetchone()
             if not v: return self.send_json({"error":"This QR voucher is invalid or has been revoked."},401)
             if int(v["used"]) and float(v["expires"] or 0) <= time.time():
                 return self.send_json({"error":"This QR voucher has expired."},401)
@@ -549,10 +593,11 @@ class Handler(BaseHTTPRequestHandler):
             if not re.fullmatch(r"[0-9]{4}", password):
                 return self.send_json({"error":"Voucher password must be exactly 4 numbers."},400)
             with db() as c:
-                old=c.execute("SELECT username,password,minutes,expires FROM vouchers WHERE id=?",(vid,)).fetchone()
-                if not old: return self.send_json({"error":"Voucher not found."},404)
+                old=c.execute("SELECT username,password,minutes,expires,deleted_at FROM vouchers WHERE id=?",(vid,)).fetchone()
+                if not old or float(old["deleted_at"] or 0) > 0:
+                    return self.send_json({"error":"Voucher not found."},404)
                 clash=c.execute("SELECT id FROM vouchers WHERE username=? AND id<>?",(username,vid)).fetchone()
-                if clash: return self.send_json({"error":"That voucher code is already in use."},400)
+                if clash: return self.send_json({"error":"That voucher code is already in use or archived."},400)
                 now=time.time()
                 if old["expires"] and int(old["minutes"])==minutes:
                     expires=float(old["expires"])
@@ -575,17 +620,15 @@ class Handler(BaseHTTPRequestHandler):
             try: data=json_body(self); vid=int(data.get("id"))
             except Exception: return self.send_json({"error":"Invalid voucher."},400)
             with db() as c:
-                voucher=c.execute("SELECT username FROM vouchers WHERE id=?",(vid,)).fetchone()
-                if not voucher: return self.send_json({"error":"Voucher not found."},404)
+                voucher=c.execute("SELECT username,deleted_at FROM vouchers WHERE id=?",(vid,)).fetchone()
+                if not voucher or float(voucher["deleted_at"] or 0) > 0:
+                    return self.send_json({"error":"Voucher not found."},404)
                 rows=c.execute("SELECT ip FROM sessions WHERE username=? AND active=1",(voucher["username"],)).fetchall()
                 c.execute("UPDATE sessions SET active=0 WHERE username=? AND active=1",(voucher["username"],))
-                c.execute("DELETE FROM vouchers WHERE id=?",(vid,))
+                c.execute("UPDATE vouchers SET deleted_at=?, revoked=1 WHERE id=?",(time.time(),vid))
             for row in rows:
                 block_ip(row["ip"])
-            qr=QR_DIR / f"qspot-{vid}.png"
-            try: qr.unlink()
-            except OSError: pass
-            self.send_json({"ok":True})
+            self.send_json({"ok":True,"archived":True})
         elif path == "/api/admin/revoke":
             if not self.admin_ok(): return self.send_json({"error":"Admin login required."},401)
             try: data=json_body(self); sid=int(data.get("id"))
@@ -603,6 +646,20 @@ class Handler(BaseHTTPRequestHandler):
                 if part.strip().startswith("qspot_admin="): sid=part.strip().split("=",1)[1]
             ADMIN_SESSIONS.pop(sid,None)
             self.send_json({"ok":True},headers={"Set-Cookie":"qspot_admin=; HttpOnly; Path=/; Max-Age=0"})
+        elif path == "/api/admin/password":
+            if not self.admin_ok(): return self.send_json({"error":"Admin login required."},401)
+            try: data=json_body(self)
+            except Exception: return self.send_json({"error":"Invalid request."},400)
+            current=str(data.get("current",""))
+            new=str(data.get("new",""))
+            confirm=str(data.get("confirm",""))
+            if not current or not new: return self.send_json({"error":"Current and new passwords are required."},400)
+            if new != confirm: return self.send_json({"error":"New passwords do not match."},400)
+            if len(new) < 4: return self.send_json({"error":"New password must be at least 4 characters."},400)
+            if new == current: return self.send_json({"error":"New password must be different."},400)
+            if not hmac.compare_digest(current, ADMIN_PASS_OVERRIDE or ADMIN_PASS): return self.send_json({"error":"Current password is incorrect."},400)
+            ADMIN_PASS_OVERRIDE = new
+            self.send_json({"ok":True})
         elif path == "/api/scan":
             length=int(self.headers.get("Content-Length","0"))
             if length > 8*1024*1024: return self.send_json({"error":"Image is too large."},413)
