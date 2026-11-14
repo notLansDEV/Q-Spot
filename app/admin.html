@@ -686,18 +686,40 @@
         color: var(--muted);
       }
 
-      .sales-eye {
-        flex: 0 0 auto;
-        width: 26px;
-        height: 26px;
-        padding: 0;
-        display: grid;
-        place-items: center;
+      .stat-value-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 12px 0 4px;
       }
 
+      .stat-value-row .stat-value {
+        margin: 0;
+      }
+
+      .sales-eye {
+        flex: 0 0 auto;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-grid;
+        place-items: center;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--muted);
+      }
+
+      .sales-eye:hover {
+        color: var(--ink);
+        border-color: #cbd5e1;
+      }
+
+      .sales-eye i.bi,
       .sales-eye svg {
         width: 16px;
         height: 16px;
+        font-size: 16px;
       }
 
       /* Dashboard split */
@@ -2191,11 +2213,16 @@
             <article class="stat-card">
               <div class="stat-top">
                 <span>Total sales</span>
+                <div class="stat-icon" aria-hidden="true">
+                  <i class="bi bi-currency-dollar icon"></i>
+                </div>
+              </div>
+              <div class="stat-value-row">
+                <div class="stat-value" id="stat-sales">₱••••</div>
                 <button class="eye-button sales-eye" id="toggle-sales" type="button" aria-label="Show total sales" aria-pressed="false">
-                  <i class="bi bi-coin icon" aria-hidden="true"></i>
+                  <i class="bi bi-eye icon" aria-hidden="true"></i>
                 </button>
               </div>
-              <div class="stat-value" id="stat-sales">₱0</div>
               <div class="stat-sub" id="stat-sales-change">—</div>
             </article>
             <article class="stat-card">
@@ -3160,9 +3187,9 @@
 
       function updateSales() {
         if (!elements.toggleSales) return;
-        const salesElement = elements.toggleSales.closest(".stat-card")?.querySelector(".stat-value");
+        const salesElement = document.getElementById("stat-sales");
         if (salesElement) salesElement.textContent = salesVisible ? `₱${totalSales.toLocaleString()}` : "₱••••";
-        elements.toggleSales.innerHTML = salesVisible ? eyeIcon() : eyeOffIcon();
+        elements.toggleSales.innerHTML = salesVisible ? eyeOffIcon() : eyeIcon();
         elements.toggleSales.setAttribute("aria-label", salesVisible ? "Hide total sales" : "Show total sales");
         elements.toggleSales.setAttribute("aria-pressed", String(salesVisible));
       }
