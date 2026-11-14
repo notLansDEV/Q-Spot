@@ -2292,8 +2292,8 @@
                   <span class="field-label">Access duration</span>
                   <div class="duration-pills" id="duration-pills">
                     <button class="duration-pill active" type="button" data-hours="1" data-label="1 Hour">1 Hour · ₱5</button>
-                    <button class="duration-pill" type="button" data-hours="24" data-label="1 Day">1 Day · ₱20</button>
-                    <button class="duration-pill" type="button" data-hours="48" data-label="2 Days">2 Days · ₱35</button>
+                    <button class="duration-pill" type="button" data-hours="24" data-label="1 Day">1 Day · ₱30</button>
+                    <button class="duration-pill" type="button" data-hours="48" data-label="2 Days">2 Days · ₱50</button>
                     <button class="duration-pill" type="button" data-hours="custom" data-label="Custom">Custom</button>
                   </div>
                   <div class="custom-time" id="custom-time">
@@ -2411,15 +2411,15 @@
               <div class="plan-row" data-plan="24" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink); gap: 12px;">
                 <span>1 Day</span>
                 <div class="plan-value">
-                  <strong class="plan-display" data-plan="24">₱20.00</strong>
-                  <span class="plan-edit-wrap" data-plan="24" hidden>₱ <input id="plan-price-24" type="number" min="0" step="1" value="20" style="width:90px;height:34px;padding:0 8px;" /></span>
+                  <strong class="plan-display" data-plan="24">₱30.00</strong>
+                  <span class="plan-edit-wrap" data-plan="24" hidden>₱ <input id="plan-price-24" type="number" min="0" step="1" value="30" style="width:90px;height:34px;padding:0 8px;" /></span>
                 </div>
               </div>
               <div class="plan-row" data-plan="48" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink); gap: 12px;">
                 <span>2 Days</span>
                 <div class="plan-value">
-                  <strong class="plan-display" data-plan="48">₱35.00</strong>
-                  <span class="plan-edit-wrap" data-plan="48" hidden>₱ <input id="plan-price-48" type="number" min="0" step="1" value="35" style="width:90px;height:34px;padding:0 8px;" /></span>
+                  <strong class="plan-display" data-plan="48">₱50.00</strong>
+                  <span class="plan-edit-wrap" data-plan="48" hidden>₱ <input id="plan-price-48" type="number" min="0" step="1" value="50" style="width:90px;height:34px;padding:0 8px;" /></span>
                 </div>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); font-size: 13px; color: var(--ink)">
@@ -2612,7 +2612,7 @@
 
     <script>
       const durationNames = { 1: "1 Hour", 24: "1 Day", 48: "2 Days" };
-      const prices = { 1: 5, 24: 20, 48: 35 };
+      const prices = { 1: 5, 24: 30, 48: 50 };
       function loadPlanPrices() {
         try {
           const saved = JSON.parse(localStorage.getItem("qspot-plan-prices") || "null");
@@ -2621,6 +2621,9 @@
             if (Number.isFinite(Number(saved[24]))) prices[24] = Number(saved[24]);
             if (Number.isFinite(Number(saved[48]))) prices[48] = Number(saved[48]);
           }
+          // migrate old defaults to current pricing
+          if (prices[24] === 20) prices[24] = 30;
+          if (prices[48] === 35) prices[48] = 50;
         } catch {}
       }
       function savePlanPrices() {
@@ -2628,17 +2631,17 @@
       }
       function formatPeso(value) {
         const n = Number(value) || 0;
-        return `₱${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+        return `₱${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       }
       function applyPlanPricesUI() {
         [1,24,48].forEach((h) => {
           const display = document.querySelector(`.plan-display[data-plan="${h}"]`);
           const input = document.getElementById(`plan-price-${h}`);
-          if (display) display.textContent = `${formatPeso(prices[h])}.00`.replace('.00.00','.00');
+          if (display) display.textContent = formatPeso(prices[h]);
           if (input) input.value = prices[h];
         });
         const custom = document.getElementById("plan-custom-display");
-        if (custom) custom.textContent = `${formatPeso(prices[1])}.00 / hour`.replace('.00.00','.00');
+        if (custom) custom.textContent = `${formatPeso(prices[1])} / hour`;
         // update generator duration pill labels
         const pills = document.querySelectorAll('#duration-pills .duration-pill[data-hours]');
         pills.forEach((btn) => {
