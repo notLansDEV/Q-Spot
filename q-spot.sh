@@ -598,7 +598,6 @@ start_qspot() {
     printf ' Channel:    %s\n' "$HOTSPOT_CHANNEL"
     printf ' Access:     Voucher required for internet\n'
     printf '=============================================\n'
-    printf 'Connect to the Wi-Fi, then open http://neverssl.com if the portal does not pop up.\n'
 }
 
 stop_qspot() {
