@@ -323,6 +323,279 @@
         max-width: 100%;
       }
 
+      .sessions-header-wrap {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      .sessions-heading {
+        min-width: 220px;
+        flex: 0 0 auto;
+      }
+
+      .sessions-controls {
+        display: grid;
+        grid-template-columns: minmax(220px, 1.5fr) minmax(160px, 1fr) minmax(170px, 1fr);
+        gap: 12px;
+        align-items: end;
+        flex: 1 1 560px;
+        max-width: 860px;
+      }
+
+      .filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .filter-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .sessions-controls .table-search {
+        width: 100%;
+        height: 42px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border-color: #e2e8f0;
+      }
+
+      .sessions-controls .table-search:focus-within {
+        background: #fff;
+        border-color: rgba(37, 99, 235, 0.35);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+      }
+
+      .sessions-controls .table-search input {
+        font-size: 13px;
+      }
+
+      .sessions-select,
+      .sessions-date {
+        width: 100%;
+        height: 42px;
+        padding: 0 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 600;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+      }
+
+      .sessions-select:focus,
+      .sessions-date:focus {
+        background: #fff;
+        border-color: rgba(37, 99, 235, 0.35);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+      }
+
+      .sessions-select-sm {
+        height: 34px;
+        padding: 0 8px;
+        border-radius: 8px;
+      }
+
+      .sessions-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 20px;
+        border-top: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+
+      .sessions-page-size {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .sessions-page-info {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .sessions-pagination .archive-pagination {
+        margin-left: 0;
+      }
+
+      /* Analytics day side panel */
+      .analytics-layout {
+        display: block;
+      }
+
+      .side-panel-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 950;
+        background: rgba(18, 29, 52, 0.32);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 180ms ease, visibility 180ms ease;
+      }
+
+      .side-panel-backdrop.open {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .day-side-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: min(420px, calc(100vw - 24px));
+        height: 100%;
+        background: #fff;
+        border-left: 1px solid var(--border);
+        box-shadow: -20px 0 50px rgba(13, 26, 54, 0.18);
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 220ms ease;
+      }
+
+      .side-panel-backdrop.open .day-side-panel {
+        transform: translateX(0);
+      }
+
+      .day-sidebar-head {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .day-sidebar-head h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .day-sidebar-head p {
+        margin: 4px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .day-sidebar-close {
+        width: 30px;
+        height: 30px;
+        border: 0;
+        border-radius: 8px;
+        background: #f2f4f7;
+        color: #667085;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+
+      .day-sidebar-close:hover { background: #e8ebf0; color: var(--ink); }
+
+      .day-sidebar-tools {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        background: #fff;
+      }
+
+      .day-sidebar-search {
+        width: 100%;
+        height: 40px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border-color: #e2e8f0;
+      }
+
+      .day-sidebar-search:focus-within {
+        background: #fff;
+        border-color: rgba(37, 99, 235, 0.35);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+      }
+
+      .day-voucher-list {
+        list-style: none;
+        margin: 0;
+        padding: 8px;
+        overflow-y: auto;
+        flex: 1;
+      }
+
+      .day-voucher-item {
+        width: 100%;
+        text-align: left;
+        border: 1px solid var(--border);
+        background: #fff;
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        display: grid;
+        gap: 4px;
+      }
+
+      .day-voucher-item:hover {
+        border-color: #bfd0ff;
+        background: #f8fbff;
+      }
+
+      .day-voucher-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .day-voucher-code {
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--ink);
+        letter-spacing: 0.03em;
+      }
+
+      .day-voucher-meta {
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .day-voucher-empty {
+        padding: 18px 12px;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 8px 12px;
+        font-size: 13px;
+      }
+      .detail-grid dt { color: var(--muted); font-weight: 600; }
+      .detail-grid dd { margin: 0; color: var(--ink); font-weight: 700; word-break: break-word; }
+
       .topbar-actions {
         display: flex;
         align-items: center;
@@ -1048,9 +1321,27 @@
         .analytics-chart {
           height: 220px;
         }
+        .day-side-panel {
+          width: min(420px, calc(100vw - 12px));
+        }
+        .sessions-controls {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .filter-field-search {
+          grid-column: 1 / -1;
+        }
+        .sessions-pagination {
+          justify-content: center;
+        }
       }
 
       @media (max-width: 520px) {
+        .sessions-controls {
+          grid-template-columns: 1fr;
+        }
+        .filter-field-search {
+          grid-column: auto;
+        }
         .month-calendar {
           gap: 4px;
         }
@@ -2265,15 +2556,33 @@
           </div>
 
           <section class="table-card" aria-labelledby="users-title">
-            <div class="table-header-wrap">
-              <div>
+            <div class="table-header-wrap sessions-header-wrap">
+              <div class="sessions-heading">
                 <p class="eyebrow">Access management</p>
                 <h2 id="users-title">Vouchers</h2>
                 <p class="section-note">Manage credentials, connection status, and assigned time.</p>
               </div>
-              <div class="search-box table-search">
-                <i class="bi bi-search icon" style="color: var(--muted); width: 16px; height: 16px" aria-hidden="true"></i>
-                <input type="text" id="table-search" placeholder="Search voucher, password, device, or status..." />
+              <div class="sessions-controls" aria-label="Session filters">
+                <label class="filter-field filter-field-search">
+                  <span class="filter-label">Search</span>
+                  <div class="search-box table-search">
+                    <i class="bi bi-search icon" style="color: var(--muted); width: 16px; height: 16px" aria-hidden="true"></i>
+                    <input type="text" id="table-search" placeholder="Search code, password, device..." />
+                  </div>
+                </label>
+                <label class="filter-field">
+                  <span class="filter-label">Status</span>
+                  <select id="session-status-filter" class="sessions-select" aria-label="Filter by status">
+                    <option value="all">All Statuses</option>
+                    <option value="unused">Unused</option>
+                    <option value="expired">Expired</option>
+                    <option value="ready">Ready</option>
+                  </select>
+                </label>
+                <label class="filter-field">
+                  <span class="filter-label">Date</span>
+                  <input id="session-date-filter" class="sessions-date" type="date" aria-label="Filter by date" />
+                </label>
               </div>
             </div>
             <div class="table-wrap">
@@ -2292,6 +2601,23 @@
                 </thead>
                 <tbody id="users-body"></tbody>
               </table>
+            </div>
+            <div class="sessions-pagination" aria-label="Table pagination">
+              <div class="sessions-page-size">
+                <label for="session-page-size">Show</label>
+                <select id="session-page-size" class="sessions-select sessions-select-sm">
+                  <option value="10">10</option>
+                  <option value="25" selected>25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                <span>entries</span>
+              </div>
+              <span class="sessions-page-info" id="session-page-info"></span>
+              <div class="archive-pagination">
+                <button class="secondary-button" id="session-prev" type="button">Prev</button>
+                <button class="secondary-button" id="session-next" type="button">Next</button>
+              </div>
             </div>
           </section>
         </section>
@@ -2403,8 +2729,12 @@
               <div class="summary-chip summary-total"><strong id="count-total">0</strong><span id="count-total-label">Total vouchers (selected day)</span></div>
             </div>
 
-            <div class="chart-container analytics-chart" id="revenue-chart-analytics"></div>
-            <p class="analytics-note" id="analytics-note"></p>
+            <div class="analytics-layout" id="analytics-layout">
+              <div class="analytics-main">
+                <div class="chart-container analytics-chart" id="revenue-chart-analytics"></div>
+                <p class="analytics-note" id="analytics-note"></p>
+              </div>
+            </div>
           </section>
         </section>
 
@@ -2569,6 +2899,53 @@
       </section>
     </div>
 
+    <div class="side-panel-backdrop" id="day-panel-backdrop" aria-hidden="true">
+      <aside class="day-side-panel" id="day-sidebar" aria-label="Vouchers for selected day">
+        <div class="day-sidebar-head">
+          <div>
+            <h3 id="day-sidebar-title">Day vouchers</h3>
+            <p id="day-sidebar-subtitle">Click a day to view vouchers.</p>
+          </div>
+          <button class="day-sidebar-close" id="day-sidebar-close" type="button" aria-label="Close day panel"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </div>
+        <div class="day-sidebar-tools">
+          <div class="search-box day-sidebar-search">
+            <i class="bi bi-search icon" style="color: var(--muted); width: 16px; height: 16px" aria-hidden="true"></i>
+            <input type="text" id="day-sidebar-search" placeholder="Search vouchers..." aria-label="Search vouchers in day panel" />
+          </div>
+        </div>
+        <div class="day-voucher-list" id="day-voucher-list"></div>
+      </aside>
+    </div>
+
+    <div class="modal-backdrop" id="voucher-detail-backdrop" role="presentation">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="voucher-detail-title">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Voucher details</p>
+            <h2 id="voucher-detail-title">Voucher</h2>
+          </div>
+          <button class="close-button" type="button" data-close="voucher-detail-backdrop" aria-label="Close voucher details">×</button>
+        </header>
+        <div class="modal-body">
+          <dl class="detail-grid">
+            <dt>Code</dt><dd id="detail-code">—</dd>
+            <dt>Password</dt><dd id="detail-password">—</dd>
+            <dt>Plan</dt><dd id="detail-plan">—</dd>
+            <dt>Status</dt><dd id="detail-status">—</dd>
+            <dt>Device</dt><dd id="detail-device">—</dd>
+            <dt>Created</dt><dd id="detail-created">—</dd>
+            <dt>Ends</dt><dd id="detail-ended">—</dd>
+            <dt>Remaining</dt><dd id="detail-remaining">—</dd>
+          </dl>
+        </div>
+        <footer class="modal-footer">
+          <button class="secondary-button" type="button" data-close="voucher-detail-backdrop">Close</button>
+          <button class="primary-button" id="detail-open-qr" type="button">View QR</button>
+        </footer>
+      </section>
+    </div>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <div id="print-area" aria-hidden="true">
@@ -2689,8 +3066,10 @@
       let archivePage = 1;
       const ARCHIVE_PAGE_SIZE = 10;
       let sessions = [];
-      const tableQuery = { current: "" };
-      const analyticsState = { view: "day", date: new Date().toISOString().slice(0, 10) };
+      const tableQuery = { current: "", status: "all", date: "", dateMode: "day" };
+      let sessionPage = 1;
+      let sessionPageSize = 25;
+      const analyticsState = { view: "day", date: new Date().toISOString().slice(0, 10), daySidebarDate: "", daySidebarQuery: "" };
       let planEditMode = false;
 
       async function api(url, body) {
@@ -2806,6 +3185,12 @@
         sidebarLogout: document.getElementById("sidebar-logout"),
         menuToggle: document.getElementById("menuToggle"),
         searchInput: document.getElementById("table-search"),
+        sessionStatusFilter: document.getElementById("session-status-filter"),
+        sessionDateFilter: document.getElementById("session-date-filter"),
+        sessionPageSize: document.getElementById("session-page-size"),
+        sessionPageInfo: document.getElementById("session-page-info"),
+        sessionPrev: document.getElementById("session-prev"),
+        sessionNext: document.getElementById("session-next"),
         sidebar: document.getElementById("sidebar"),
         totalVouchers: document.getElementById("total-vouchers"),
         statActive: document.getElementById("stat-active"),
@@ -2820,11 +3205,29 @@
         analyticsDate: document.getElementById("analytics-date"),
         analyticsNote: document.getElementById("analytics-note"),
         analyticsSubtitle: document.getElementById("analytics-subtitle"),
+        analyticsLayout: document.getElementById("analytics-layout"),
+        dayPanelBackdrop: document.getElementById("day-panel-backdrop"),
+        daySidebar: document.getElementById("day-sidebar"),
+        daySidebarTitle: document.getElementById("day-sidebar-title"),
+        daySidebarSubtitle: document.getElementById("day-sidebar-subtitle"),
+        daySidebarClose: document.getElementById("day-sidebar-close"),
+        daySidebarSearch: document.getElementById("day-sidebar-search"),
+        dayVoucherList: document.getElementById("day-voucher-list"),
         count1h: document.getElementById("count-1h"),
         count1d: document.getElementById("count-1d"),
         count2d: document.getElementById("count-2d"),
         countTotal: document.getElementById("count-total"),
         countTotalLabel: document.getElementById("count-total-label"),
+        voucherDetailBackdrop: document.getElementById("voucher-detail-backdrop"),
+        detailCode: document.getElementById("detail-code"),
+        detailPassword: document.getElementById("detail-password"),
+        detailPlan: document.getElementById("detail-plan"),
+        detailStatus: document.getElementById("detail-status"),
+        detailDevice: document.getElementById("detail-device"),
+        detailCreated: document.getElementById("detail-created"),
+        detailEnded: document.getElementById("detail-ended"),
+        detailRemaining: document.getElementById("detail-remaining"),
+        detailOpenQr: document.getElementById("detail-open-qr"),
         editPlansBtn: document.getElementById("edit-plans-btn"),
         editPlansLabel: document.getElementById("edit-plans-label")
       };
@@ -2898,11 +3301,40 @@
         return '<i class="bi bi-trash" aria-hidden="true"></i>';
       }
 
+      function sessionDateRange() {
+        if (!tableQuery.date) return null;
+        const base = new Date(tableQuery.date + "T00:00:00");
+        if (Number.isNaN(base.getTime())) return null;
+        if (tableQuery.dateMode === "week") {
+          const day = base.getDay();
+          const diff = (day + 6) % 7;
+          const monday = new Date(base);
+          monday.setDate(base.getDate() - diff);
+          const start = startOfDay(monday).getTime();
+          return { start, end: start + 7 * 86400000 };
+        }
+        if (tableQuery.dateMode === "month") {
+          const start = new Date(base.getFullYear(), base.getMonth(), 1).getTime();
+          const end = new Date(base.getFullYear(), base.getMonth() + 1, 1).getTime();
+          return { start, end };
+        }
+        const start = startOfDay(base).getTime();
+        return { start, end: start + 86400000 };
+      }
+
       function voucherMatches(user) {
         const query = tableQuery.current.trim().toLowerCase();
-        if (!query) return true;
-        const haystack = [user.code, user.password, user.device, user.status].join(" ").toLowerCase();
-        return haystack.includes(query);
+        if (query) {
+          const haystack = [user.code, user.password, user.device, user.status, statusLabel(user.status)].join(" ").toLowerCase();
+          if (!haystack.includes(query)) return false;
+        }
+        if (tableQuery.status !== "all" && user.status !== tableQuery.status) return false;
+        const range = sessionDateRange();
+        if (range) {
+          const t = user.createdAt || 0;
+          if (t < range.start || t >= range.end) return false;
+        }
+        return true;
       }
 
       function renderArchive() {
@@ -2935,9 +3367,17 @@
       }
 
       function renderTable() {
-        const visible = users.filter((user) => voucherMatches(user));
-        if (!visible.length) {
-          elements.body.innerHTML = '<tr><td colspan="8" class="empty-state">No vouchers yet. Generate one above to get started.</td></tr>';
+        const filtered = users.filter((user) => voucherMatches(user));
+        const total = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(total / sessionPageSize));
+        if (sessionPage > totalPages) sessionPage = totalPages;
+        if (sessionPage < 1) sessionPage = 1;
+        const start = (sessionPage - 1) * sessionPageSize;
+        const visible = filtered.slice(start, start + sessionPageSize);
+
+        if (!total) {
+          const hasFilters = tableQuery.current.trim() || tableQuery.status !== "all" || tableQuery.date;
+          elements.body.innerHTML = `<tr><td colspan="8" class="empty-state">${hasFilters ? "No vouchers match the current filters." : "No vouchers yet. Generate one above to get started."}</td></tr>`;
         } else {
           elements.body.innerHTML = visible.map((user) => {
             return `
@@ -2954,6 +3394,13 @@
           `;
           }).join("");
         }
+        if (elements.sessionPageInfo) {
+          const from = total ? start + 1 : 0;
+          const to = Math.min(start + sessionPageSize, total);
+          elements.sessionPageInfo.textContent = total ? `Showing ${from}-${to} of ${total} vouchers` : "No vouchers";
+        }
+        if (elements.sessionPrev) elements.sessionPrev.disabled = sessionPage <= 1 || !total;
+        if (elements.sessionNext) elements.sessionNext.disabled = sessionPage >= totalPages || !total;
         updateSummary();
       }
 
@@ -3033,6 +3480,93 @@
         }).join("");
         const el = document.getElementById("revenue-chart-dashboard");
         if (el) el.innerHTML = html;
+      }
+
+      function vouchersForDay(dateStr) {
+        const base = new Date(dateStr + "T00:00:00");
+        if (Number.isNaN(base.getTime())) return [];
+        const start = startOfDay(base).getTime();
+        return vouchersInRange(start, start + 86400000).sort((a, b) => b.createdAt - a.createdAt);
+      }
+
+      function closeDaySidebar() {
+        analyticsState.daySidebarDate = "";
+        if (elements.dayPanelBackdrop) elements.dayPanelBackdrop.classList.remove("open");
+      }
+
+      function openVoucherDetail(id) {
+        const user = users.find((item) => item.id === id);
+        if (!user) return;
+        if (elements.detailCode) elements.detailCode.textContent = user.code || "—";
+        if (elements.detailPassword) elements.detailPassword.textContent = user.password || "—";
+        if (elements.detailPlan) elements.detailPlan.textContent = `${durationLabel(user.hours)} · ₱${priceFor(user.minutes).toLocaleString()}`;
+        if (elements.detailStatus) elements.detailStatus.textContent = statusLabel(user.status);
+        if (elements.detailDevice) elements.detailDevice.textContent = user.device || "—";
+        if (elements.detailCreated) elements.detailCreated.textContent = formatDateTime(user.createdAt);
+        if (elements.detailEnded) elements.detailEnded.textContent = formatDateTime(user.expiresAt);
+        if (elements.detailRemaining) elements.detailRemaining.textContent = remainingExact(user);
+        if (elements.detailOpenQr) {
+          elements.detailOpenQr.onclick = () => {
+            closeModal(elements.voucherDetailBackdrop);
+            drawServerQr(user.qr, elements.largeCanvas);
+            elements.largeQrTitle.textContent = `QR code · ${user.code}`;
+            elements.largePreviewCode.textContent = user.code;
+            elements.largePreviewMeta.innerHTML = `Password: <span>${escapeHTML(user.password)}</span> · ${escapeHTML(durationLabel(user.hours))}<br><span>${escapeHTML(remainingExact(user))}</span>`;
+            openModal(elements.largeQrBackdrop);
+          };
+        }
+        openModal(elements.voucherDetailBackdrop);
+      }
+
+      function renderDaySidebar(dateStr) {
+        const all = vouchersForDay(dateStr);
+        const query = (analyticsState.daySidebarQuery || "").trim().toLowerCase();
+        const list = query
+          ? all.filter((user) => {
+              const planLabel = planBucket(user.minutes) === "1h" ? "1 hour" : planBucket(user.minutes) === "1d" ? "1 day" : planBucket(user.minutes) === "2d" ? "2 days" : durationLabel(user.hours);
+              const haystack = [user.code, user.password, user.device, user.status, statusLabel(user.status), planLabel].join(" ").toLowerCase();
+              return haystack.includes(query);
+            })
+          : all;
+        const base = new Date(dateStr + "T00:00:00");
+        if (elements.daySidebarTitle) elements.daySidebarTitle.textContent = Number.isNaN(base.getTime()) ? "Day vouchers" : base.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+        if (elements.daySidebarSubtitle) elements.daySidebarSubtitle.textContent = query
+          ? `${list.length} of ${all.length} voucher${all.length === 1 ? "" : "s"}`
+          : `${all.length} voucher${all.length === 1 ? "" : "s"} on this day`;
+        if (elements.dayVoucherList) {
+          if (!all.length) {
+            elements.dayVoucherList.innerHTML = '<div class="day-voucher-empty">No vouchers for this day.</div>';
+          } else if (!list.length) {
+            elements.dayVoucherList.innerHTML = '<div class="day-voucher-empty">No vouchers match your search.</div>';
+          } else {
+            elements.dayVoucherList.innerHTML = list.map((user) => {
+              const plan = planBucket(user.minutes);
+              const planLabel = plan === "1h" ? "1 Hour" : plan === "1d" ? "1 Day" : plan === "2d" ? "2 Days" : durationLabel(user.hours);
+              return `<button class="day-voucher-item" type="button" data-day-voucher-id="${user.id}">
+                <div class="day-voucher-top">
+                  <span class="day-voucher-code">${escapeHTML(user.code)}</span>
+                  <span class="status-pill ${user.status}">${statusLabel(user.status)}</span>
+                </div>
+                <div class="day-voucher-meta">
+                  <span>${escapeHTML(planLabel)}</span>
+                  <span>₱${priceFor(user.minutes).toLocaleString()}</span>
+                  <span>${escapeHTML(user.device || "No device")}</span>
+                </div>
+              </button>`;
+            }).join("");
+            elements.dayVoucherList.querySelectorAll("[data-day-voucher-id]").forEach((btn) => {
+              btn.addEventListener("click", () => openVoucherDetail(Number(btn.dataset.dayVoucherId)));
+            });
+          }
+        }
+      }
+
+      function openDaySidebar(dateStr) {
+        analyticsState.daySidebarDate = dateStr;
+        analyticsState.daySidebarQuery = "";
+        if (elements.daySidebarSearch) elements.daySidebarSearch.value = "";
+        if (elements.dayPanelBackdrop) elements.dayPanelBackdrop.classList.add("open");
+        renderDaySidebar(dateStr);
       }
 
       function renderAnalyticsChart() {
@@ -3142,13 +3676,14 @@
             </div>`;
           }
           container.innerHTML = `<div class="month-calendar">${heads}${cells}</div>`;
-          // click to select day for summary counts
+          // click to select day for summary counts and open day sidebar
           container.querySelectorAll(".month-cell[data-day]").forEach((cell) => {
             cell.style.cursor = "pointer";
             cell.addEventListener("click", () => {
               analyticsState.date = cell.dataset.day;
               if (elements.analyticsDate) elements.analyticsDate.value = analyticsState.date;
               renderAnalyticsChart();
+              openDaySidebar(cell.dataset.day);
             });
           });
         }
@@ -3163,6 +3698,9 @@
         if (elements.countTotal) elements.countTotal.textContent = dayCounts.total;
         if (elements.analyticsNote) elements.analyticsNote.textContent = note;
         if (elements.analyticsSubtitle) elements.analyticsSubtitle.textContent = subtitle;
+        if (analyticsState.daySidebarDate && elements.dayPanelBackdrop?.classList.contains("open")) {
+          renderDaySidebar(analyticsState.daySidebarDate);
+        }
       }
 
       function renderRevenueCharts() {
@@ -3565,9 +4103,20 @@
         });
       });
 
+      if (elements.dayPanelBackdrop) {
+        elements.dayPanelBackdrop.addEventListener("click", (event) => {
+          if (event.target === elements.dayPanelBackdrop) closeDaySidebar();
+        });
+      }
+
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
-          document.querySelectorAll(".modal-backdrop.open").forEach(closeModal);
+          const openModals = document.querySelectorAll(".modal-backdrop.open");
+          if (openModals.length) {
+            openModals.forEach(closeModal);
+            return;
+          }
+          if (elements.dayPanelBackdrop?.classList.contains("open")) closeDaySidebar();
         }
       });
 
@@ -3581,6 +4130,23 @@
 
       elements.searchInput.addEventListener("input", (event) => {
         tableQuery.current = event.target.value;
+        sessionPage = 1;
+        renderTable();
+      });
+
+      if (elements.sessionStatusFilter) elements.sessionStatusFilter.addEventListener("change", (event) => {
+        tableQuery.status = event.target.value;
+        sessionPage = 1;
+        renderTable();
+      });
+      if (elements.sessionDateFilter) elements.sessionDateFilter.addEventListener("change", (event) => {
+        tableQuery.date = event.target.value;
+        sessionPage = 1;
+        renderTable();
+      });
+      if (elements.sessionPageSize) elements.sessionPageSize.addEventListener("change", (event) => {
+        sessionPageSize = Math.max(1, Number(event.target.value) || 25);
+        sessionPage = 1;
         renderTable();
       });
 
@@ -3655,6 +4221,16 @@
       // Archive pagination
       if (elements.archivePrev) elements.archivePrev.addEventListener("click", () => { archivePage -= 1; renderArchive(); });
       if (elements.archiveNext) elements.archiveNext.addEventListener("click", () => { archivePage += 1; renderArchive(); });
+
+      // Session pagination
+      if (elements.sessionPrev) elements.sessionPrev.addEventListener("click", () => { sessionPage -= 1; renderTable(); });
+      if (elements.sessionNext) elements.sessionNext.addEventListener("click", () => { sessionPage += 1; renderTable(); });
+
+      if (elements.daySidebarClose) elements.daySidebarClose.addEventListener("click", closeDaySidebar);
+      if (elements.daySidebarSearch) elements.daySidebarSearch.addEventListener("input", (event) => {
+        analyticsState.daySidebarQuery = event.target.value || "";
+        if (analyticsState.daySidebarDate) renderDaySidebar(analyticsState.daySidebarDate);
+      });
 
       // Access plans edit/check
       function setPlanEditMode(on) {
