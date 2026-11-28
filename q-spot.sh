@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Q-Spot: open Wi-Fi + voucher-controlled captive portal for Manjaro/NetworkManager.
+# Q-Spot: open Wi-Fi + voucher-controlled captive portal for Linux/NetworkManager.
 # Keeps the existing app/server.py, qspot-manager.py, and config.env.
 # Wi-Fi is OPEN; internet forwarding remains blocked until the portal authorizes a client IP.
 
@@ -20,20 +20,26 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
 fi
 
 setup_config() {
-    local detected uplink ssid admin_user admin_pass entered
+    local detected ap_detected ssid admin_user admin_pass entered
     local interactive=0
 
     detected="$(ip route show default 2>/dev/null | awk 'NR==1 {print $5}')"
     if [[ -z "$detected" ]] && command -v nmcli >/dev/null 2>&1; then
         detected="$(nmcli -t -f DEVICE,TYPE device status 2>/dev/null | awk -F: '$2=="wifi"{print $1; exit}')"
     fi
+    ap_detected="$(command -v iw >/dev/null 2>&1 && iw dev 2>/dev/null | awk '$1=="Interface"{print $2; exit}' || true)"
     [[ -t 0 ]] && interactive=1
 
     printf 'Q-Spot first-time setup\n'
     if (( interactive )); then
-        read -r -p "Internet uplink interface [${detected:-wlo1}]: " uplink || uplink=""
+        read -r -p "Internet uplink interface (Wi-Fi or Ethernet) [${detected:-wlo1}]: " uplink || uplink=""
     fi
     uplink="${uplink:-${detected:-wlo1}}"
+
+    if (( interactive )); then
+        read -r -p "Hotspot AP interface name [qspot0]: " ap_iface || ap_iface=""
+    fi
+    ap_iface="${ap_iface:-qspot0}"
 
     if (( interactive )); then
         read -r -p "Wi-Fi hotspot name [Q-Spot]: " ssid || ssid=""
@@ -56,7 +62,7 @@ UPLINK=$(printf '%q' "$uplink")
 SSID=$(printf '%q' "$ssid")
 ADMIN_USER=$(printf '%q' "$admin_user")
 ADMIN_PASS=$(printf '%q' "$admin_pass")
-AP_IFACE=qspot0
+AP_IFACE=$(printf '%q' "$ap_iface")
 PORTAL_PORT=8081
 GATEWAY_IP=10.42.0.1
 EOF
@@ -64,6 +70,7 @@ EOF
 
     printf '\nAdmin login: %s / %s\n' "$admin_user" "$admin_pass"
     printf 'Saved in %s (keep it private).\n\n' "$CONFIG_FILE"
+    [[ -n "$ap_detected" ]] && printf 'Detected Wi-Fi device: %s\n\n' "$ap_detected"
 }
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
@@ -81,12 +88,15 @@ cd "$SCRIPT_DIR"
 UPLINK="${UPLINK:-wlo1}"
 SSID="${SSID:-Q-Spot Hotspot}"
 AP_IFACE="${AP_IFACE:-qspot0}"
+AP_RADIO="${AP_RADIO:-}"
 GATEWAY_IP="${GATEWAY_IP:-10.42.0.1}"
 PORTAL_PORT="${PORTAL_PORT:-8081}"
 ADMIN_USER="${ADMIN_USER:-admin}"
 ADMIN_PASS="${ADMIN_PASS:-}"
 COUNTRY_CODE="${COUNTRY_CODE:-PH}"
 DHCP_LEASE_TIME="${DHCP_LEASE_TIME:-12h}"
+DEFAULT_HOTSPOT_CHANNEL="${DEFAULT_HOTSPOT_CHANNEL:-6}"
+DEFAULT_HW_MODE="${DEFAULT_HW_MODE:-g}"
 
 # WIFI_PASS is intentionally NOT used. Q-Spot is an open Wi-Fi network;
 # the voucher portal controls internet access instead of a Wi-Fi password.
@@ -111,6 +121,7 @@ touch "$HOSTAPD_LOG" "$DNSMASQ_LOG" "$PORTAL_LOG"
 chmod 600 "$HOSTAPD_LOG" "$DNSMASQ_LOG" "$PORTAL_LOG"
 
 STARTUP_IN_PROGRESS=0
+CREATED_VIRTUAL_AP=0
 
 # Ensure the portal and manager receive the same settings as the shell script.
 export UPLINK SSID AP_IFACE GATEWAY_IP PORTAL_PORT ADMIN_USER ADMIN_PASS
@@ -156,7 +167,7 @@ if [[ -z "$PYTHON_BIN" ]]; then
 fi
 
 # -----------------------------------------------------------------------------
-# Utilities
+# Utilities & cross-distro package support
 # -----------------------------------------------------------------------------
 log() { printf '[Q-Spot] %s\n' "$*"; }
 warn() { printf '[Q-Spot] WARNING: %s\n' "$*" >&2; }
@@ -164,28 +175,102 @@ die() { printf '[Q-Spot] ERROR: %s\n' "$*" >&2; exit 1; }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
-install_dependencies() {
-    local -a missing_packages=()
-    local binary package
-    local -A package_for=(
-        [hostapd]=hostapd
-        [dnsmasq]=dnsmasq
-        [iw]=iw
-        [ip]=iproute2
-        [iptables]=iptables
-        [nmcli]=networkmanager
-        [sysctl]=procps-ng
-        [conntrack]=conntrack-tools
-        [qrencode]=qrencode
-        [zbarimg]=zbar
-        [python3]=python
-        [flock]=util-linux
-        [ss]=iproute2
-    )
+detect_pkg_manager() {
+    if have apt-get; then
+        printf 'apt'
+    elif have pacman; then
+        printf 'pacman'
+    elif have dnf; then
+        printf 'dnf'
+    elif have zypper; then
+        printf 'zypper'
+    else
+        printf 'none'
+    fi
+}
 
-    for binary in "${!package_for[@]}"; do
+map_package_name() {
+    local pm="$1" binary="$2"
+    case "$pm" in
+        pacman)
+            case "$binary" in
+                hostapd) printf 'hostapd' ;;
+                dnsmasq) printf 'dnsmasq' ;;
+                iw) printf 'iw' ;;
+                ip|ss) printf 'iproute2' ;;
+                iptables) printf 'iptables' ;;
+                nmcli) printf 'networkmanager' ;;
+                sysctl) printf 'procps-ng' ;;
+                conntrack) printf 'conntrack-tools' ;;
+                qrencode) printf 'qrencode' ;;
+                zbarimg) printf 'zbar' ;;
+                python3) printf 'python' ;;
+                flock) printf 'util-linux' ;;
+            esac
+            ;;
+        apt)
+            case "$binary" in
+                hostapd) printf 'hostapd' ;;
+                dnsmasq) printf 'dnsmasq' ;;
+                iw) printf 'iw' ;;
+                ip|ss) printf 'iproute2' ;;
+                iptables) printf 'iptables' ;;
+                nmcli) printf 'network-manager' ;;
+                sysctl) printf 'procps' ;;
+                conntrack) printf 'conntrack' ;;
+                qrencode) printf 'qrencode' ;;
+                zbarimg) printf 'zbar-tools' ;;
+                python3) printf 'python3' ;;
+                flock) printf 'util-linux' ;;
+            esac
+            ;;
+        dnf)
+            case "$binary" in
+                hostapd) printf 'hostapd' ;;
+                dnsmasq) printf 'dnsmasq' ;;
+                iw) printf 'iw' ;;
+                ip|ss) printf 'iproute' ;;
+                iptables) printf 'iptables-nft' ;;
+                nmcli) printf 'NetworkManager' ;;
+                sysctl) printf 'procps-ng' ;;
+                conntrack) printf 'conntrack-tools' ;;
+                qrencode) printf 'qrencode' ;;
+                zbarimg) printf 'zbar' ;;
+                python3) printf 'python3' ;;
+                flock) printf 'util-linux' ;;
+            esac
+            ;;
+        zypper)
+            case "$binary" in
+                hostapd) printf 'hostapd' ;;
+                dnsmasq) printf 'dnsmasq' ;;
+                iw) printf 'iw' ;;
+                ip|ss) printf 'iproute2' ;;
+                iptables) printf 'iptables' ;;
+                nmcli) printf 'NetworkManager' ;;
+                sysctl) printf 'procps' ;;
+                conntrack) printf 'conntrack-tools' ;;
+                qrencode) printf 'qrencode' ;;
+                zbarimg) printf 'zbar' ;;
+                python3) printf 'python3' ;;
+                flock) printf 'util-linux' ;;
+            esac
+            ;;
+    esac
+}
+
+install_dependencies() {
+    local -a binaries=(hostapd dnsmasq iw ip iptables nmcli sysctl conntrack qrencode zbarimg python3 flock ss)
+    local -a missing_packages=()
+    local binary package pm
+
+    pm="$(detect_pkg_manager)"
+
+    for binary in "${binaries[@]}"; do
         if ! have "$binary"; then
-            package="${package_for[$binary]}"
+            [[ "$pm" == "none" ]] && die "Missing required command '$binary' and no supported package manager found."
+            package="$(map_package_name "$pm" "$binary")"
+            [[ -n "$package" ]] || die "No package mapping for '$binary' on '$pm'."
             local already=0 existing
             for existing in "${missing_packages[@]:-}"; do
                 [[ "$existing" == "$package" ]] && already=1
@@ -195,16 +280,35 @@ install_dependencies() {
     done
 
     if ((${#missing_packages[@]})); then
-        if ! have pacman; then
-            die "Missing dependencies (${missing_packages[*]}) and pacman is unavailable."
-        fi
-        log "Installing required packages: ${missing_packages[*]}"
-        pacman -S --needed --noconfirm "${missing_packages[@]}" || die "Dependency installation failed."
+        log "Installing required packages via $pm: ${missing_packages[*]}"
+        case "$pm" in
+            apt)
+                apt-get update && apt-get install -y --no-install-recommends "${missing_packages[@]}" || \
+                    die "Dependency installation failed via apt-get."
+                ;;
+            pacman)
+                pacman -S --needed --noconfirm "${missing_packages[@]}" || \
+                    die "Dependency installation failed via pacman."
+                ;;
+            dnf)
+                dnf install -y "${missing_packages[@]}" || \
+                    die "Dependency installation failed via dnf."
+                ;;
+            zypper)
+                zypper --non-interactive install --no-recommends "${missing_packages[@]}" || \
+                    die "Dependency installation failed via zypper."
+                ;;
+            *)
+                die "Missing dependencies (${missing_packages[*]}). Please install them manually."
+                ;;
+        esac
     fi
 
     for binary in hostapd dnsmasq iw ip iptables nmcli sysctl python3 flock ss; do
         have "$binary" || die "Required command is still missing: $binary"
     done
+
+    iptables -w 5 -L >/dev/null 2>&1 || die "iptables is not usable on this kernel/system."
 
     [[ -f "$APP_FILE" ]] || die "Portal application not found: $APP_FILE"
     [[ -f "$MANAGER_FILE" ]] || warn "Voucher manager not found: $MANAGER_FILE (portal can still run)."
@@ -330,32 +434,93 @@ stop_orphaned_daemons() {
 }
 
 # -----------------------------------------------------------------------------
-# Wi-Fi interface and channel
+# Wi-Fi capability detection, interface, and channel
 # -----------------------------------------------------------------------------
+is_wireless_iface() {
+    local iface="$1"
+    [[ -d "/sys/class/net/$iface/wireless" ]] || iw dev "$iface" info >/dev/null 2>&1
+}
+
+get_phy_for_iface() {
+    local iface="$1"
+    if [[ -r "/sys/class/net/$iface/phy80211/name" ]]; then
+        cat "/sys/class/net/$iface/phy80211/name"
+        return 0
+    fi
+    iw dev "$iface" info 2>/dev/null | awk '/wiphy / { print "phy" $2; exit }'
+}
+
+resolve_ap_source_iface() {
+    if [[ -n "$AP_RADIO" ]]; then
+        printf '%s' "$AP_RADIO"
+        return 0
+    fi
+    if iw dev "$AP_IFACE" info >/dev/null 2>&1; then
+        printf '%s' "$AP_IFACE"
+        return 0
+    fi
+    if is_wireless_iface "$UPLINK"; then
+        printf '%s' "$UPLINK"
+        return 0
+    fi
+    iw dev 2>/dev/null | awk '$1=="Interface"{print $2; exit}'
+}
+
+check_ap_mode_support() {
+    local src_iface phy
+    src_iface="$(resolve_ap_source_iface || true)"
+    [[ -n "$src_iface" ]] || die "No wireless interface found for AP mode (set AP_RADIO or AP_IFACE to a Wi-Fi card/dongle)."
+
+    phy="$(get_phy_for_iface "$src_iface" || true)"
+    [[ -n "$phy" ]] || die "Could not determine wireless PHY for '$src_iface'."
+
+    if ! iw phy "$phy" info 2>/dev/null | awk '
+        /Supported interface modes:/ { in_modes=1; next }
+        in_modes && /^[[:space:]]*[^*\t ]/ { in_modes=0 }
+        in_modes && /^[[:space:]]*\* AP([[:space:]]|$)/ { found=1; exit }
+        END { exit(found ? 0 : 1) }
+    '; then
+        die "Wireless device '$src_iface' ($phy) does NOT support AP (hotspot) mode."
+    fi
+
+    AP_SOURCE_IFACE="$src_iface"
+    log "AP mode supported on '$src_iface' ($phy)."
+}
+
 get_uplink_channel() {
     local channel freq
 
-    channel="$(iw dev "$UPLINK" info 2>/dev/null | awk '$1 == "channel" { print $2; exit }')"
-    if [[ "$channel" =~ ^[0-9]+$ ]]; then
-        HOTSPOT_CHANNEL="$channel"
-    else
-        # iw link often reports decimal frequencies, e.g. 2437.0; round to integer.
-        freq="$(iw dev "$UPLINK" link 2>/dev/null | awk '/freq:/ { printf "%.0f\n", $2; exit }')"
-        [[ "$freq" =~ ^[0-9]+$ ]] || die "Cannot determine the channel/frequency of $UPLINK."
-        if (( freq == 2484 )); then
-            HOTSPOT_CHANNEL=14
-        elif (( freq >= 2412 && freq <= 2472 )); then
-            HOTSPOT_CHANNEL=$(( (freq - 2407) / 5 ))
-        elif (( freq >= 5000 && freq <= 5900 )); then
-            HOTSPOT_CHANNEL=$(( (freq - 5000) / 5 ))
-        elif (( freq >= 5955 && freq <= 7115 )); then
-            HOTSPOT_CHANNEL=$(( (freq - 5950) / 5 ))
+    if is_wireless_iface "$UPLINK"; then
+        channel="$(iw dev "$UPLINK" info 2>/dev/null | awk '$1 == "channel" { print $2; exit }')"
+        if [[ "$channel" =~ ^[0-9]+$ ]]; then
+            HOTSPOT_CHANNEL="$channel"
         else
-            die "Unsupported Wi-Fi frequency: ${freq} MHz"
+            # iw link often reports decimal frequencies, e.g. 2437.0; round to integer.
+            freq="$(iw dev "$UPLINK" link 2>/dev/null | awk '/freq:/ { printf "%.0f\n", $2; exit }')"
+            if [[ "$freq" =~ ^[0-9]+$ ]]; then
+                if (( freq == 2484 )); then
+                    HOTSPOT_CHANNEL=14
+                elif (( freq >= 2412 && freq <= 2472 )); then
+                    HOTSPOT_CHANNEL=$(( (freq - 2407) / 5 ))
+                elif (( freq >= 5000 && freq <= 5900 )); then
+                    HOTSPOT_CHANNEL=$(( (freq - 5000) / 5 ))
+                elif (( freq >= 5955 && freq <= 7115 )); then
+                    HOTSPOT_CHANNEL=$(( (freq - 5950) / 5 ))
+                else
+                    die "Unsupported Wi-Fi frequency: ${freq} MHz"
+                fi
+            else
+                HOTSPOT_CHANNEL="$DEFAULT_HOTSPOT_CHANNEL"
+            fi
         fi
+    else
+        # Wired Ethernet or non-Wi-Fi uplink: use configured default channel/band.
+        HOTSPOT_CHANNEL="$DEFAULT_HOTSPOT_CHANNEL"
     fi
 
-    if (( HOTSPOT_CHANNEL <= 14 )); then
+    if [[ -n "${HOSTAPD_HW_MODE:-}" ]]; then
+        :
+    elif (( HOTSPOT_CHANNEL <= 14 )); then
         HOSTAPD_HW_MODE="g"
         if (( HOTSPOT_CHANNEL == 14 )); then
             HOSTAPD_HW_MODE="b"
@@ -368,20 +533,29 @@ get_uplink_channel() {
 }
 
 check_uplink() {
-    iw dev "$UPLINK" info >/dev/null 2>&1 || die "Uplink interface $UPLINK does not exist."
-    if ! iw dev "$UPLINK" link 2>/dev/null | grep -q '^Connected to '; then
-        die "$UPLINK is not connected to a Wi-Fi network. Connect to the café Wi-Fi first."
+    ip link show "$UPLINK" >/dev/null 2>&1 || die "Uplink interface '$UPLINK' does not exist."
+    ip link show "$UPLINK" | grep -q 'state UP' || warn "Uplink interface '$UPLINK' is not in UP state; checking link/route anyway."
+
+    if is_wireless_iface "$UPLINK"; then
+        if ! iw dev "$UPLINK" link 2>/dev/null | grep -q '^Connected to '; then
+            die "Wireless uplink '$UPLINK' is not connected to a Wi-Fi network."
+        fi
+    elif ! ip route show dev "$UPLINK" 2>/dev/null | grep -q .; then
+        warn "No IPv4 route found directly on '$UPLINK'; verify upstream internet connectivity."
     fi
 }
 
 create_or_prepare_ap_interface() {
-    local info mode
+    local info mode src_iface
 
-    log "Preparing virtual AP interface $AP_IFACE..."
+    src_iface="${AP_SOURCE_IFACE:-$(resolve_ap_source_iface)}"
+    log "Preparing AP interface $AP_IFACE (source: $src_iface)..."
+
     if ! iw dev "$AP_IFACE" info >/dev/null 2>&1; then
-        if ! iw dev "$UPLINK" interface add "$AP_IFACE" type __ap; then
-            iw dev "$AP_IFACE" info >/dev/null 2>&1 || die "Could not create $AP_IFACE. Check iw/driver logs."
+        if ! iw dev "$src_iface" interface add "$AP_IFACE" type __ap; then
+            iw dev "$AP_IFACE" info >/dev/null 2>&1 || die "Could not create virtual AP interface '$AP_IFACE' from '$src_iface'. Check driver/interface combination limits."
         fi
+        CREATED_VIRTUAL_AP=1
     fi
 
     if have nmcli; then
@@ -557,14 +731,14 @@ start_qspot() {
     log "Checking Q-Spot dependencies..."
     install_dependencies
     check_uplink
+    check_ap_mode_support
     get_uplink_channel
 
     log "Starting Q-Spot..."
     stop_orphaned_daemons
     log "Uplink: $UPLINK"
     log "SSID: $SSID (open Wi-Fi; no Wi-Fi password)"
-    log "Uplink channel: $HOTSPOT_CHANNEL"
-    log "Hotspot channel: $HOTSPOT_CHANNEL"
+    log "Hotspot channel: $HOTSPOT_CHANNEL (hw_mode=$HOSTAPD_HW_MODE)"
 
     save_forwarding_state
     create_or_prepare_ap_interface
@@ -595,7 +769,8 @@ start_qspot() {
     printf ' Gateway:    %s\n' "$GATEWAY_IP"
     printf ' Portal:     http://%s:%s/\n' "$GATEWAY_IP" "$PORTAL_PORT"
     printf ' Uplink:     %s\n' "$UPLINK"
-    printf ' Channel:    %s\n' "$HOTSPOT_CHANNEL"
+    printf ' AP Source:  %s\n' "${AP_SOURCE_IFACE:-$AP_IFACE}"
+    printf ' Channel:    %s (%s)\n' "$HOTSPOT_CHANNEL" "$HOSTAPD_HW_MODE"
     printf ' Access:     Voucher required for internet\n'
     printf '=============================================\n'
     printf 'Connect to the Wi-Fi, then open http://neverssl.com if the portal does not pop up.\n'
@@ -612,7 +787,9 @@ stop_qspot() {
 
     if iw dev "$AP_IFACE" info >/dev/null 2>&1; then
         ip link set "$AP_IFACE" down 2>/dev/null || true
-        iw dev "$AP_IFACE" del 2>/dev/null || true
+        if [[ "$AP_IFACE" == "qspot0" ]] || (( CREATED_VIRTUAL_AP == 1 )); then
+            iw dev "$AP_IFACE" del 2>/dev/null || true
+        fi
     fi
 
     rm -f "$HOSTAPD_PID" "$DNSMASQ_PID" "$PORTAL_PID"
@@ -667,7 +844,7 @@ usage() {
 Usage: sudo ./q-spot.sh {start|stop|restart|status|manager|logs}
 
   start    Start open Q-Spot Wi-Fi and voucher captive portal (default)
-  stop     Stop Q-Spot without disconnecting the café Wi-Fi uplink
+  stop     Stop Q-Spot without disconnecting the uplink
   restart  Restart Q-Spot
   status   Show daemon, AP interface, station and firewall status
   manager  Open the existing voucher manager
